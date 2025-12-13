@@ -1,0 +1,81 @@
+class_section
+
+class MyClass
+{
+    class_var_section
+        int a;
+        float b;
+
+    class_methods_section
+        int method(int c,bool ds){
+            c=ds;
+            bool terog;
+        }
+        bool print(){
+            Print(12);
+        }
+
+}
+
+class TwoClass{
+    class_methods_section
+        bool isWorking(){
+            Print(123);
+        }
+}
+
+global_var_section
+    string wow;
+    int pa;
+
+global_fun_section
+    bool check(int a,int b)
+    {
+        Print(ITWORKSINFUNCTION);
+    }
+    int try(bool as)
+    {
+        int x;
+    }
+
+main
+    a=b;
+    a=5+c*10;
+    MyClass wow = new MyClass();
+    wow.method(a,b);
+    wow.a = 2+4+wow.method(a,b)+10;
+    function(wow.method(function(a,b),b));
+    Print(2);
+    if(a>b){
+        Print(YES);
+    }
+
+    if(wow.getItem()==wow.item){
+        Print(YAY);
+    } else {
+        Print(NO);
+    }
+
+    while(a!=b){
+        a=a+1;
+    }
+
+    if(a==b){
+        w.item++;
+    } else if(a>b){
+        while(a>b){
+            a--;
+        }
+    } else {
+        a=c;
+        a=w.getItem()++;
+    }
+
+    /*
+    sdasdawd ssigmsda 
+    */
+
+    //ssigmsda
+
+    a=b+2.31++;
+end_main
