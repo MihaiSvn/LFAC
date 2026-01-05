@@ -16,7 +16,9 @@
 "class_methods_section" {return CLASS_METHODS_SECTION;}
 "global_var_section" {return GVAR_SECTION;}
 "global_fun_section" {return GFUN_SECTION;}
-"int"|"float"|"string"|"bool" {std::cout<<"("<<yytext<<",TYPE)";  return TYPE;}
+"int"|"float"|"string"|"bool"|"char" {std::cout<<"("<<yytext<<",TYPE)";
+yylval.stringVal = strdup(yytext);
+ return TYPE;}
 "class" {std::cout<<"("<<yytext<<",CLASS)";  return CLASS;}
 "new" {std::cout<<"("<<yytext<<",NEW)";  return NEW;}
 
@@ -31,11 +33,40 @@
 "--" {std::cout<<"("<<yytext<<",DEC)"; return DEC;}
 "+"|"-"|"/"|"%"|"*" {std::cout<<"("<<yytext<<",OPERATOR)"; return OPERATOR;}
 
+"true"|"false" {
+    if(strcmp(yytext,"true") == 0) { yylval.boolVal = true; }
+    else { yylval.boolVal = false; }
+    return BOOL;
+}
 
 "main" {return MAIN_BEGIN;}
 "end_main" {return MAIN_END;}
-[a-zA-Z][a-zA-Z0-9_]* {std::cout<<"("<<yytext<<",ID)";  return ID;}
-[1-9][0-9]*(\.[0-9]+)?|0(\.[0-9]+)? {std::cout<<"("<<yytext<<",NR)";  return NR; }
+[a-zA-Z][a-zA-Z0-9_]* {std::cout<<"("<<yytext<<",ID)"; 
+yylval.stringVal = strdup(yytext);
+return ID;}
+
+
+
+0|-?([1-9][0-9]*) { 
+    yylval.intVal = atoi(yytext); 
+    return INT; 
+}
+
+-?([1-9][0-9]*|[0])"."[0-9]* { 
+    yylval.floatVal = atof(yytext); 
+    return FLOAT; 
+}
+
+'[a-zA-Z0-9 -=+()\/?;:'!@#$%^&]' {
+    yylval.charVal = yytext[1]; 
+    return CHAR;
+}
+
+\"[^\"]*\" {
+    yylval.stringVal = strdup(yytext); 
+    return STRING;
+}
+
 
 "{" {return '{';}
 "}" {return '}';}

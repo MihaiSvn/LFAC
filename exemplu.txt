@@ -3,16 +3,16 @@ class_section
 class MyClass
 {
     class_var_section
-        int a;
+        int a=10;
         float b;
+        bool x;
 
     class_methods_section
         int method(int c,bool ds){
-            c=ds;
             bool terog;
         }
         bool print(){
-            Print(12);
+            //Print(12);
         }
 
 }
@@ -20,16 +20,19 @@ class MyClass
 class TwoClass{
     class_methods_section
         bool isWorking(){
-            Print(123);
+            //Print(123);
         }
 }
 
 global_var_section
     string wow;
     int pa;
+    int a;
+    int b;
+    bool sd;
 
 global_fun_section
-    bool check(int a,int b)
+    bool check(int s,int p)
     {
         Print(ITWORKSINFUNCTION);
     }
@@ -37,22 +40,32 @@ global_fun_section
     {
         int x;
     }
+    bool checknull(int a){
+
+    }
 
 main
     a=b;
-    a=5+c*10;
-    MyClass wow = new MyClass();
-    wow.method(a,b);
-    wow.a = 2+4+wow.method(a,b)+10;
-    function(wow.method(function(a,b),b));
+    a=10;
+    
+    MyClass idk = new MyClass();
+
+    idk.a++;
+
+    check(pa,pa);
+    //wow.method(a,b);
+    //wow.a = 2+4+wow.method(a,b)+10;
+    //function(wow.method(function(a,b),b));
+
+    //check();
     Print(2);
     if(a>b){
         Print(YES);
     }
 
-    if(wow.getItem()==wow.item){
+    if(idk.print()==checknull(a)){
         Print(YAY);
-    } else {
+    } else if(idk.method(idk.a,true)==idk.a) {
         Print(NO);
     }
 
@@ -61,14 +74,15 @@ main
     }
 
     if(a==b){
-        w.item++;
+        TwoClass w = new TwoClass();
+        //w.item++;
     } else if(a>b){
         while(a>b){
             a--;
         }
     } else {
-        a=c;
-        a=w.getItem()++;
+        a=b;
+        //a=w.getItem()++;
     }
 
     /*
@@ -77,5 +91,7 @@ main
 
     //ssigmsda
 
-    a=b+2.31++;
+    a=b+2++;
+    Print(10);
+    Print(true);
 end_main

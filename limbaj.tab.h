@@ -45,10 +45,10 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 1 "./limbaj.y"
+#line 1 "limbaj.y"
 
   #include <string>
- 
+  #include <cstring>
   using namespace std;
 
 #line 55 "limbaj.tab.h"
@@ -76,22 +76,37 @@ extern int yydebug;
     WHILE = 269,                   /* WHILE  */
     COMPARE = 270,                 /* COMPARE  */
     ID = 271,                      /* ID  */
-    NR = 272,                      /* NR  */
-    PRINT = 273,                   /* PRINT  */
-    BCOMM = 274,                   /* BCOMM  */
-    ENDCOMM = 275,                 /* ENDCOMM  */
-    MAIN_BEGIN = 276,              /* MAIN_BEGIN  */
-    MAIN_END = 277,                /* MAIN_END  */
-    OPERATOR = 278,                /* OPERATOR  */
-    INC = 279,                     /* INC  */
-    DEC = 280                      /* DEC  */
+    INT = 272,                     /* INT  */
+    BOOL = 273,                    /* BOOL  */
+    FLOAT = 274,                   /* FLOAT  */
+    STRING = 275,                  /* STRING  */
+    CHAR = 276,                    /* CHAR  */
+    PRINT = 277,                   /* PRINT  */
+    MAIN_BEGIN = 278,              /* MAIN_BEGIN  */
+    MAIN_END = 279,                /* MAIN_END  */
+    OPERATOR = 280,                /* OPERATOR  */
+    INC = 281,                     /* INC  */
+    DEC = 282                      /* DEC  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef int YYSTYPE;
+union YYSTYPE
+{
+#line 37 "limbaj.y"
+
+        char* stringVal;
+        bool boolVal;
+        char charVal;
+        int intVal;
+        float floatVal;
+
+#line 107 "limbaj.tab.h"
+
+};
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif
