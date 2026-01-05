@@ -6,6 +6,7 @@ class MyClass
         int a=10;
         float b;
         bool x;
+        int sir[10];
 
     class_methods_section
         int method(int c,bool ds){
@@ -30,11 +31,16 @@ global_var_section
     int a;
     int b;
     bool sd;
+    int tesst1,test2,test3;
+    int vect[5];
+    int vector[3]={1,2,3};
+    char car;
+    bool conditions[2]={true,false};
 
 global_fun_section
     bool check(int s,int p)
     {
-        Print(ITWORKSINFUNCTION);
+        //Print(ITWORKSINFUNCTION);
     }
     int try(bool as)
     {
@@ -47,12 +53,13 @@ global_fun_section
 main
     a=b;
     a=10;
-    
     MyClass idk = new MyClass();
 
     idk.a++;
-
-    check(pa,pa);
+    idk.sir[0]=10;
+    vect[3]=12+2+12;
+    sd=true&&false;
+    check(tesst1,pa);
     //wow.method(a,b);
     //wow.a = 2+4+wow.method(a,b)+10;
     //function(wow.method(function(a,b),b));
@@ -60,13 +67,13 @@ main
     //check();
     Print(2);
     if(a>b){
-        Print(YES);
+        //Print(YES);
     }
 
     if(idk.print()==checknull(a)){
-        Print(YAY);
-    } else if(idk.method(idk.a,true)==idk.a) {
-        Print(NO);
+        //Print(YAY);
+    } else if(idk.method(vect[2],true)==idk.a) {
+        Print(2);
     }
 
     while(a!=b){

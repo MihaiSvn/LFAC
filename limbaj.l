@@ -31,7 +31,10 @@ yylval.stringVal = strdup(yytext);
 
 "++" {std::cout<<"("<<yytext<<",INC)"; return INC;}
 "--" {std::cout<<"("<<yytext<<",DEC)"; return DEC;}
-"+"|"-"|"/"|"%"|"*" {std::cout<<"("<<yytext<<",OPERATOR)"; return OPERATOR;}
+"+"|"-"|"/"|"%"|"*"|"&&"|"||" {std::cout<<"("<<yytext<<",OPERATOR)"; 
+    yylval.stringVal = strdup(yytext); 
+    return OPERATOR;
+}
 
 "true"|"false" {
     if(strcmp(yytext,"true") == 0) { yylval.boolVal = true; }
@@ -75,6 +78,8 @@ return ID;}
 ";" {return ';';}
 "," {return ',';}
 "." {return '.';}
+"[" {return '[';}
+"]" {return ']';}
 
 [ \t] ; // ignora spatii
 \n {yylineno++;}

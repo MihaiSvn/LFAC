@@ -32,6 +32,8 @@ char* currentVarName;
 char* currentVarType;
 
 int nr_param=0;
+int vector_size=0;
+int numberOfElementsToAdd=0;
 %}
 
 %union{
@@ -41,7 +43,7 @@ int nr_param=0;
         int intVal;
         float floatVal;
 }
-%token <stringVal>TYPE CLASS_SECTION CLASS_VAR_SECTION CLASS_METHODS_SECTION CLASS GVAR_SECTION GFUN_SECTION NEW ASSIGN IF ELSE WHILE COMPARE <stringVal>ID <intVal>INT <boolVal>BOOL <floatVal>FLOAT <stringVal>STRING <charVal>CHAR PRINT MAIN_BEGIN MAIN_END OPERATOR INC DEC
+%token <stringVal>TYPE CLASS_SECTION CLASS_VAR_SECTION CLASS_METHODS_SECTION CLASS GVAR_SECTION GFUN_SECTION NEW ASSIGN IF ELSE WHILE COMPARE <stringVal>ID <intVal>INT <boolVal>BOOL <floatVal>FLOAT <stringVal>STRING <charVal>CHAR PRINT MAIN_BEGIN MAIN_END <stringVal>OPERATOR INC DEC
 
 %type <stringVal>fun_call <stringVal>class_method_call <stringVal>class_access <stringVal>expression_elem <stringVal>compare_expr <stringVal> expression <stringVal> print_expr
 %start program
@@ -140,6 +142,44 @@ class_access : class_method_call
                         }
                 } else {
                         string msg="The class variable "+string($3)+" doesn't exist";
+                    yyerror(msg.c_str());
+                }
+                
+            }
+            | ID '.' ID '[' INT ']'
+            {
+                if(currentScope->searchVariable($1)==nullopt){
+                                string msg="the class instance "+string($1)+" doesn't exist";
+                                yyerror(msg.c_str());
+                        }
+                        if(currentScope->classExists(currentScope->getType($1))==false){ //daca tipul este o clasa existenta, ca sa nu pot face int.ceva
+                                string msg="the variable "+string($1)+"isn't a class instance";
+                                yyerror(msg.c_str());
+                        }
+
+                string classType = currentScope->getType($1);
+                auto var=currentScope->searchVectorInClass(classType,$3,globalScope);
+                if(var.has_value()){
+                        auto [tip,numberElements,valori,clasa] = var.value();
+                        if(clasa.has_value()){  //daca este o variabila de clasa
+                                string cls = clasa.value();
+                                 if($5>=numberElements){
+                                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                                        yyerror(msg.c_str());
+                                }
+                                if($5<0){
+                                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the index can't be negative!)";
+                                        yyerror(msg.c_str());
+                                }
+                                if(cls!=classType){
+                                        string msg="the vector"+string($3)+"is in a different class";
+                                        yyerror(msg.c_str());
+                                } else {
+                                   $$ = strdup(tip.c_str());
+                                }
+                        }
+                } else {
+                        string msg="The class vector "+string($3)+" doesn't exist";
                     yyerror(msg.c_str());
                 }
                 
@@ -292,6 +332,96 @@ class_var_call : ID '.' ID ASSIGN expression
                 yyerror(msg.c_str());
                 }
             }
+            | ID '.' ID '[' INT ']' ASSIGN expression
+                {
+                auto varObj = currentScope->searchVariable($1);
+                if (!varObj.has_value()) {
+                        string msg = "Object '" + string($1) + "' is not declared.";
+                        yyerror(msg.c_str());
+                }
+                string className = currentScope->getType($1);
+                auto var = currentScope->searchVectorInClass(className, $3, globalScope);
+                if(var.has_value()) {
+                int numberElements = get<1>(var.value());
+                if($5>=numberElements){
+                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                        yyerror(msg.c_str());
+                }
+                if($5<0){
+                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the index can't be negative!)";
+                        yyerror(msg.c_str());
+                }
+                string memberType = get<0>(var.value());
+                string exprType = $8;
+                if(memberType != exprType) {
+                        string msg = "Cannot assign [" + exprType + "] to member '" + string($1) + "." + string($3) + "' of type [" + memberType + "]";
+                        yyerror(msg.c_str());
+                }
+                }
+                free($8);
+                }
+            | ID '.' ID '[' INT ']' INC
+            {
+                auto varObj = currentScope->searchVariable($1);
+                if (!varObj.has_value()) {
+                        string msg = "Object '" + string($1) + "' is not declared.";
+                        yyerror(msg.c_str());
+                }
+                string className = currentScope->getType($1);
+                auto var = currentScope->searchVectorInClass(className, $3, globalScope);
+                
+                if(var.has_value()) {
+                 int numberElements = get<1>(var.value());
+                if($5>=numberElements){
+                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                        yyerror(msg.c_str());
+                }
+                if($5<0){
+                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the index can't be negative!)";
+                        yyerror(msg.c_str());
+                }
+                string memberType = std::get<0>(var.value());
+                if(memberType != "int" && memberType != "float") {
+                        string msg = "Cannot increment member '" + string($1) + "." + string($3) + 
+                                "' because it is of type [" + memberType + "] (not numeric)";
+                        yyerror(msg.c_str());
+                }
+                } else {
+                string msg = "Class member '" + string($3) + "' not found in class '" + className + "'";
+                yyerror(msg.c_str());
+                }
+            }
+            | ID '.' ID '[' INT ']' DEC
+            {
+                auto varObj = currentScope->searchVariable($1);
+                if (!varObj.has_value()) {
+                        string msg = "Object '" + string($1) + "' is not declared.";
+                        yyerror(msg.c_str());
+                }
+                string className = currentScope->getType($1);
+                auto var = currentScope->searchVectorInClass(className, $3, globalScope);
+                
+                if(var.has_value()) {
+                 int numberElements = get<1>(var.value());
+                if($5>=numberElements){
+                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                        yyerror(msg.c_str());
+                }
+                if($5<0){
+                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the index can't be negative!)";
+                        yyerror(msg.c_str());
+                }
+                string memberType = std::get<0>(var.value());
+                if(memberType != "int" && memberType != "float") {
+                        string msg = "Cannot decrement member '" + string($1) + "." + string($3) + 
+                                "' because it is of type [" + memberType + "] (not numeric)";
+                        yyerror(msg.c_str());
+                }
+                } else {
+                string msg = "Class member '" + string($3) + "' not found in class '" + className + "'";
+                yyerror(msg.c_str());
+                }
+            }
             ;
 
 //    ################# VARIABILE ###########################
@@ -306,7 +436,7 @@ variable_declarations : var_decl ';'
 
 var_decl : TYPE ID 
         {
-                optional<string> className = nullopt;
+               optional<string> className = nullopt;
 
                if(currentScope != nullptr && currentScope->parentScope != nullptr) {
                   string parentName = currentScope->name;
@@ -325,6 +455,27 @@ var_decl : TYPE ID
                         yyerror(msg.c_str());
                 }
         }
+            | TYPE ID ',' var_list
+            {
+                optional<string> className = nullopt;
+
+               if(currentScope != nullptr && currentScope->parentScope != nullptr) {
+                  string parentName = currentScope->name;
+            
+                  auto& classes = globalScope->classes;
+                  if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
+                     className = parentName;
+                        cout<<"added function "<<$2<<" to class "<<parentName<<endl;
+                  }
+                }
+                if(currentScope->addVariable($2,$1,nullopt,className)){
+                        currentVarName= $2;
+                        currentVarType = $1;
+                } else {
+                        string msg="Variable "+string($2) + " already declared!";
+                        yyerror(msg.c_str());
+                }
+            }
             | TYPE ID ASSIGN
             {
                 optional<string> className = nullopt;
@@ -358,7 +509,121 @@ var_decl : TYPE ID
                 cout<<"TYPE TO ASSIGN: "<<typeVarToBeAssigned<<endl;
                 free($5);
              }
+             | TYPE ID '[' INT ']'
+             {
+                 optional<string> className = nullopt;
+
+               if(currentScope != nullptr && currentScope->parentScope != nullptr) {
+                  string parentName = currentScope->name;
+            
+                  auto& classes = globalScope->classes;
+                  if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
+                     className = parentName;
+                        cout<<"added Vector "<<$2<<" to class "<<parentName<<endl;
+                  }
+                }
+                if(currentScope->addVector($2,$1,$4,nullopt,className)){
+                        currentVarName= $2;
+                        currentVarType = $1;
+                } else {
+                        string msg="Vecotr "+string($2) + " already declared!";
+                        yyerror(msg.c_str());
+                }
+
+             }
+             | TYPE ID '[' INT ']' ASSIGN
+             {
+                 optional<string> className = nullopt;
+
+               if(currentScope != nullptr && currentScope->parentScope != nullptr) {
+                  string parentName = currentScope->name;
+            
+                  auto& classes = globalScope->classes;
+                  if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
+                     className = parentName;
+                        cout<<"added Vector "<<$2<<" to class "<<parentName<<endl;
+                  }
+                }
+                numberOfElementsToAdd=$4;
+                if(currentScope->addVector($2,$1,numberOfElementsToAdd,nullopt,className)){
+                        currentVarName= $2;
+                        currentVarType = $1;
+                } else {
+                        string msg="Vecotr "+string($2) + " already declared!";
+                        yyerror(msg.c_str());
+                }
+
+                numberOfElementsToAdd=$4;
+                cout<<"NUMBER OF ELEMENTS TO ADD "<<numberOfElementsToAdd<<endl;
+
+             }
+              '{' vector_elements '}'
+              {
+                if(numberOfElementsToAdd>0){
+                       string msg="Vector init received too few arguments";
+                        yyerror(msg.c_str());  
+                }
+              }
             ;
+
+vector_elements: vector_element
+             | vector_element ',' vector_elements
+
+vector_element: expression
+                {
+                        if(numberOfElementsToAdd<=0){
+                                string msg="Vector init received too many arguments";
+                                yyerror(msg.c_str());
+                        }
+                        if(string($1)!=string(currentVarType)){
+                                string msg="Tried adding a variable of type "+ string($1) + " to a vector of type "+string(currentVarType);
+                                yyerror(msg.c_str());
+                        }
+                        numberOfElementsToAdd--;
+                        //should add value to vector<string> here
+                }
+
+var_list: ID
+                {
+                        optional<string> className = nullopt;
+
+                        if(currentScope != nullptr && currentScope->parentScope != nullptr) {
+                        string parentName = currentScope->name;
+                
+                        auto& classes = globalScope->classes;
+                        if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
+                        className = parentName;
+                                cout<<"added variable "<<$1<<" to class "<<parentName<<endl;
+                        }
+                        }
+                        if(currentScope->addVariable($1,currentVarType,nullopt,className)){
+                                currentVarName=$1;
+                        } else {
+                                string msg="Variable "+string($1) + " already declared!";
+                                yyerror(msg.c_str());
+                        }
+ 
+                }
+           | ID ',' var_list
+                {
+                        optional<string> className = nullopt;
+
+                        if(currentScope != nullptr && currentScope->parentScope != nullptr) {
+                        string parentName = currentScope->name;
+                
+                        auto& classes = globalScope->classes;
+                        if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
+                        className = parentName;
+                                cout<<"added variable "<<$1<<" to class "<<parentName<<endl;
+                        }
+                        }
+                        if(currentScope->addVariable($1,currentVarType,nullopt,className)){
+                                currentVarName = $1;
+                        } else {
+                                string msg="Variable "+string($1) + " already declared!";
+                                yyerror(msg.c_str());
+                        }
+                }
 //    ################# FUNCTII ###########################
 
 global_fun_section : {std::cout<<endl<<"No global functions"<<endl;}
@@ -423,7 +688,6 @@ block_element : statement ';'
             | var_decl { yyerror("Missing semicolon");}
             | class_create_instance ';'
             | class_method_call ';'
-            | class_var_call ';'
             | fun_call ';'
             | print_statement ';'
             | if_statement
@@ -548,19 +812,158 @@ statement: ID ASSIGN
                         yyerror(msg.c_str());
                 }
         }
+        | ID '[' INT ']' ASSIGN
+        {
+                auto var=currentScope->searchVector($1);
+                if(var.has_value()){
+                        int numberElements= get<1>(var.value());
+                        if($3>=numberElements){
+                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                        yyerror(msg.c_str());
+                        }
+                          if($3<0){
+                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the index can't be negative!)";
+                        yyerror(msg.c_str());
+                        }
+                }
+                if(var==nullopt){
+                        string msg="The vector "+string($1)+" doesn't exist!";
+                        yyerror(msg.c_str());
+                }
+        }
+         expression {
+                string typeVarToBeAssigned=currentScope->getType($1);
+                if(typeVarToBeAssigned!=string($7)){
+                        string msg="Type mismatch at assignment, trying operation on ["+typeVarToBeAssigned+"] and ["+string($7)+"]";
+                        yyerror(msg.c_str());
+                }
+                free($7);
+         }
+        | ID '[' INT ']' INC
+        {
+                auto var=currentScope->searchVector($1);
+                if(var.has_value()){
+                        int numberElements= get<1>(var.value());
+                        if($3>=numberElements){
+                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                        yyerror(msg.c_str());
+                        }
+                          if($3<0){
+                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the index can't be negative!)";
+                        yyerror(msg.c_str());
+                        }
+                }
+                if(var==nullopt){
+                        string msg="The vector "+string($1)+" doesn't exist!";
+                        yyerror(msg.c_str());
+                }
+                string typeVarToBeAssigned=currentScope->getType($1);
+                cout<<"TYPE TO ASSIGN: "<<typeVarToBeAssigned<<endl;
+                if(typeVarToBeAssigned=="int" || typeVarToBeAssigned=="float"){
+                        //change value
+                } else {
+                        string msg="The variable "+string($1)+ " isn't a float or an int, you can't increment it!";
+                        yyerror(msg.c_str());
+                }
+        }
+        | ID '[' INT ']' DEC
+        {
+                auto var=currentScope->searchVector($1);
+                if(var.has_value()){
+                        int numberElements= get<1>(var.value());
+                        if($3>=numberElements){
+                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                        yyerror(msg.c_str());
+                        }
+                          if($3<0){
+                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the index can't be negative!)";
+                        yyerror(msg.c_str());
+                        }
+                }
+                if(var==nullopt){
+                        string msg="The vector "+string($1)+" doesn't exist!";
+                        yyerror(msg.c_str());
+                }
+                string typeVarToBeAssigned=currentScope->getType($1);
+                cout<<"TYPE TO ASSIGN: "<<typeVarToBeAssigned<<endl;
+                if(typeVarToBeAssigned=="int" || typeVarToBeAssigned=="float"){
+                        //change value
+                } else {
+                        string msg="The variable "+string($1)+ " isn't a float or an int, you can't increment it!";
+                        yyerror(msg.c_str());
+                }
+        }
+        | class_var_call 
         ;
 
 expression : expression_elem OPERATOR expression 
         { 
-            if(string($1)!=string($3)){
-                string msg="Type mismatch, trying operation on ["+string($1)+"] and ["+string($3)+"]";
+                string type1=string($1);
+                string type2=string($3);
+                string resultType="int";
+                string op = string($2);
+                cout<<"OPERATOR "<<op<<endl;
+                bool ok=true;
+                if (op == "+") {
+                if (type1 == "string" && type2 == "string") {
+                        resultType = "string";
+                } 
+                else if ((type1 == "int" || type1 == "float") && (type2 == "int" || type2 == "float")) {
+                        if (type1 == "float" || type2 == "float") resultType = "float";
+                        else resultType = "int";
+                        } 
+                        else {
+                                ok = false;
+                        }
+                } 
+                else if (op == "-" || op == "*" || op == "/") {
+                if ((type1 != "int" && type1 != "float") || (type2 != "int" && type2 != "float")) {
+                        ok = false;
+                }
+                if (type1 == "float" || type2 == "float") resultType = "float";
+                else resultType = "int";
+                }
+                else if (op == "%") {
+                        if (type1 != "int" || type2 != "int") {
+                                ok = false;
+                        }
+                        resultType = "int";
+                } 
+                else if (op == "&&" || op == "||") {
+                        if (type1 != "bool" || type2 != "bool") {
+                                ok = false;
+                        }
+                        resultType = "bool";
+                } 
+                else {
+                        ok = false;
+                }
+            if(ok==false){
+                string msg="Type mismatch, trying operation "+op+ " on ["+type1+"] and ["+type2+"]";
                 yyerror(msg.c_str());
             }
-            $$ = $1; 
+            if(type1!=type2){
+                string msg="Type mismatch, trying operation on ["+type1+"] and ["+type2+"]";
+                yyerror(msg.c_str());
+            }
+            $$ = strdup(resultType.c_str());
+            free($1);
             free($3); 
         }
-        | expression_elem INC  {$$=$1;}
-        | expression_elem DEC  {$$=$1;}
+        | expression_elem INC  
+        {
+            if(string($1)!="int" && string($1)!="float"){
+                yyerror("Cannot increment a non-numeric value!");
+            }    
+            $$=$1; 
+        }
+        | expression_elem DEC  
+        {
+            if(string($1)!="int" && string($1)!="float"){
+                yyerror("Cannot increment a non-numeric value!");
+            }
+           $$=$1;
+        }
         | expression_elem {$$=$1;}
         ;
 
@@ -591,6 +994,30 @@ expression_elem : class_access
         }
         | ID
         {
+                if(currentScope->searchVariable($1)==nullopt){
+                        string msg="Variable "+string($1)+" doesn't exist";
+                        yyerror(msg.c_str());
+                }
+                $$=strdup(currentScope->getType($1).c_str());
+        }
+        | ID '[' INT ']'
+        {
+                 auto var=currentScope->searchVector($1);
+                if(var.has_value()){
+                        int numberElements= get<1>(var.value());
+                        if($3>=numberElements){
+                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                        yyerror(msg.c_str());
+                        }
+                          if($3<0){
+                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the index can't be negative!)";
+                        yyerror(msg.c_str());
+                        }
+                }
+                if(var==nullopt){
+                        string msg="The vector "+string($1)+" doesn't exist!";
+                        yyerror(msg.c_str());
+                }
                 $$=strdup(currentScope->getType($1).c_str());
         }
         ;
@@ -638,7 +1065,6 @@ main_block_element : statement ';'
             | statement { yyerror("Missing semicolon");}
             | class_create_instance ';'
             | class_method_call ';'
-            | class_var_call ';'
             | fun_call ';'
             | print_statement ';'
             | if_statement

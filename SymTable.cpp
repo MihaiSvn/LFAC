@@ -4,9 +4,24 @@ bool SymTable::addVariable(const string& varName, const string& varType,const op
     if(variables.find(varName)!=variables.end()){ //exista deja variabila declarata
         return false;
     }
+    if(vectors.find(varName)!=vectors.end()){ //exista deja vector declarat
+        return false;
+    }
     variables[varName] = make_tuple(varType,value,className);
     return true;
 }
+
+bool SymTable::addVector(const string& vecName, const string& vecType,int numberElements, const optional<vector<string>> values,const optional<string>& className){
+     if(variables.find(vecName)!=variables.end()){ //exista deja variabila declarata
+        return false;
+    }
+    if(vectors.find(vecName)!=vectors.end()){ //exista deja vector declarat
+        return false;
+    }
+    vectors[vecName] = make_tuple(vecType,numberElements,values,className);
+    return true;
+}
+
 
 bool SymTable::addFunction(const string& funName, const string& funType,const optional<vector<string>> parameters, const optional<string>& className){
     if(functions.find(funName)!=functions.end()){ 
@@ -31,6 +46,10 @@ string SymTable::getType(const string& varName){
     if(var.has_value()){
         return get<0>(var.value());
     }
+    auto vec=searchVector(varName);
+    if(vec.has_value()){
+        return get<0>(vec.value());
+    }
     return "";
 }
 
@@ -45,6 +64,18 @@ optional<tuple<string,optional<string>,optional<string>>> SymTable::searchVariab
     }
     return nullopt;
 }
+
+optional<tuple<string,int,optional<vector<string>>,optional<string>>> SymTable::searchVector(const string& vecName){
+    printf("Searching for vector %s\n",vecName.c_str());
+    if(vectors.find(vecName) != vectors.end()){
+        return vectors[vecName];
+    }
+    if(parentScope){
+        return parentScope->searchVector(vecName);
+    }
+    return nullopt;
+}
+
 
 optional<tuple<string,optional<vector<string>>,optional<string>>> SymTable::searchFunction(const string& funName){
     auto it=functions.find(funName);
@@ -86,6 +117,21 @@ if (classScope != nullptr) {
     if (classScope != nullptr) {
         if (classScope->variables.count(varName)) {
             return classScope->variables[varName];
+        }
+    }
+    return nullopt;
+}
+optional<tuple<string,int,optional<vector<string>>,optional<string>>> SymTable::searchVectorInClass(const string& className,const string& varName,SymTable* globalScope){
+     SymTable* classScope = globalScope->getChildScope(className);
+    cout << "DEBUG: Looking for " << varName << " in class " << className << endl;
+if (classScope != nullptr) {
+    for (auto const& [key, val] : classScope->functions) {
+        cout << "DEBUG: Found existing method in map: " << key << endl;
+    }
+}
+    if (classScope != nullptr) {
+        if (classScope->vectors.count(varName)) {
+            return classScope->vectors[varName];
         }
     }
     return nullopt;
