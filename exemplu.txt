@@ -41,6 +41,9 @@ global_fun_section
     bool check(int s,int p)
     {
         //Print(ITWORKSINFUNCTION);
+        MyClass idk = new MyClass();
+
+    idk.a++;
     }
     int try(bool as)
     {
@@ -54,7 +57,7 @@ main
     a=b;
     a=10;
     MyClass idk = new MyClass();
-
+    a=-(-a+b);
     idk.a++;
     idk.sir[0]=10;
     vect[3]=12+2+12;

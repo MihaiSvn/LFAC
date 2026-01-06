@@ -86,7 +86,9 @@ extern int yydebug;
     MAIN_END = 279,                /* MAIN_END  */
     OPERATOR = 280,                /* OPERATOR  */
     INC = 281,                     /* INC  */
-    DEC = 282                      /* DEC  */
+    DEC = 282,                     /* DEC  */
+    NOT = 283,                     /* NOT  */
+    MINUS = 284                    /* MINUS  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -103,7 +105,7 @@ union YYSTYPE
         int intVal;
         float floatVal;
 
-#line 107 "limbaj.tab.h"
+#line 109 "limbaj.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

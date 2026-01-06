@@ -352,8 +352,8 @@ static void yynoreturn yy_fatal_error ( const char* msg  );
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
-#define YY_NUM_RULES 45
-#define YY_END_OF_BUFFER 46
+#define YY_NUM_RULES 47
+#define YY_END_OF_BUFFER 48
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -363,25 +363,25 @@ struct yy_trans_info
 	};
 static const flex_int16_t yy_accept[179] =
     {   0,
-        0,    0,    0,    0,    0,    0,   46,   44,   35,   36,
-       44,   44,   17,   44,   44,   28,   29,   17,   31,   17,
-       32,   17,   22,   22,   30,   14,   10,   14,   21,   21,
-       33,   34,   21,   21,   21,   21,   21,   21,   21,   21,
-       21,   21,   21,   26,   44,   27,   38,   39,   38,   42,
-       43,   14,    0,   25,   17,    0,   15,   16,    0,   22,
-       37,   41,   23,   22,   21,   21,   21,   21,   21,   21,
-       21,   21,   21,   21,   11,   21,   21,   21,   21,   21,
-       21,   40,   24,   23,   21,   21,   21,   21,   21,   21,
-       21,   21,   21,    7,   21,    9,   21,   21,   21,   21,
+        0,    0,    0,    0,    0,    0,   48,   46,   37,   38,
+       15,   46,   19,   46,   46,   30,   31,   18,   33,   18,
+       34,   19,   24,   24,   32,   14,   10,   14,   23,   23,
+       35,   36,   23,   23,   23,   23,   23,   23,   23,   23,
+       23,   23,   23,   28,   46,   29,   40,   41,   40,   44,
+       45,   14,    0,   27,   19,    0,   16,   17,    0,   24,
+       39,   43,   25,   24,   23,   23,   23,   23,   23,   23,
+       23,   23,   23,   23,   11,   23,   23,   23,   23,   23,
+       23,   42,   26,   25,   23,   23,   23,   23,   23,   23,
+       23,   23,   23,    7,   23,    9,   23,   23,   23,   23,
 
-       21,   12,   21,   21,   21,   21,   19,   21,   18,   21,
-        1,    8,   21,   21,   21,   13,   21,   21,   21,   21,
-       21,   21,   21,   21,   21,   21,   21,   20,   21,   21,
-       21,   21,   21,   21,   21,   21,   21,   21,   21,   21,
-       21,   21,   21,   21,   21,   21,   21,   21,   21,   21,
-       21,    2,   21,   21,   21,   21,   21,   21,   21,   21,
-       21,   21,   21,   21,   21,   21,   21,   21,    3,   21,
-       21,   21,    6,    5,   21,   21,    4,    0
+       23,   12,   23,   23,   23,   23,   21,   23,   20,   23,
+        1,    8,   23,   23,   23,   13,   23,   23,   23,   23,
+       23,   23,   23,   23,   23,   23,   23,   22,   23,   23,
+       23,   23,   23,   23,   23,   23,   23,   23,   23,   23,
+       23,   23,   23,   23,   23,   23,   23,   23,   23,   23,
+       23,    2,   23,   23,   23,   23,   23,   23,   23,   23,
+       23,   23,   23,   23,   23,   23,   23,   23,    3,   23,
+       23,   23,    6,    5,   23,   23,    4,    0
     } ;
 
 static const YY_CHAR yy_ec[256] =
@@ -916,184 +916,199 @@ YY_RULE_SETUP
 case 15:
 YY_RULE_SETUP
 #line 32 "limbaj.l"
-{std::cout<<"("<<yytext<<",INC)"; return INC;}
+{std::cout<<"("<<yytext<<",NOT)";
+yylval.stringVal=strdup(yytext);
+return NOT;}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 33 "limbaj.l"
-{std::cout<<"("<<yytext<<",DEC)"; return DEC;}
+#line 35 "limbaj.l"
+{std::cout<<"("<<yytext<<",INC)"; return INC;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 34 "limbaj.l"
-{std::cout<<"("<<yytext<<",OPERATOR)"; 
-    yylval.stringVal = strdup(yytext); 
-    return OPERATOR;
-}
+#line 36 "limbaj.l"
+{std::cout<<"("<<yytext<<",DEC)"; return DEC;}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 39 "limbaj.l"
+#line 37 "limbaj.l"
+{ 
+    yylval.stringVal = strdup(yytext); 
+    return yytext[0];
+}
+	YY_BREAK
+case 19:
+YY_RULE_SETUP
+#line 42 "limbaj.l"
+{ 
+    yylval.stringVal = strdup(yytext); 
+    return OPERATOR; 
+}
+	YY_BREAK
+case 20:
+YY_RULE_SETUP
+#line 47 "limbaj.l"
 {
     if(strcmp(yytext,"true") == 0) { yylval.boolVal = true; }
     else { yylval.boolVal = false; }
     return BOOL;
 }
 	YY_BREAK
-case 19:
-YY_RULE_SETUP
-#line 45 "limbaj.l"
-{return MAIN_BEGIN;}
-	YY_BREAK
-case 20:
-YY_RULE_SETUP
-#line 46 "limbaj.l"
-{return MAIN_END;}
-	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 47 "limbaj.l"
+#line 53 "limbaj.l"
+{return MAIN_BEGIN;}
+	YY_BREAK
+case 22:
+YY_RULE_SETUP
+#line 54 "limbaj.l"
+{return MAIN_END;}
+	YY_BREAK
+case 23:
+YY_RULE_SETUP
+#line 55 "limbaj.l"
 {std::cout<<"("<<yytext<<",ID)"; 
 yylval.stringVal = strdup(yytext);
 return ID;}
 	YY_BREAK
-case 22:
+case 24:
 YY_RULE_SETUP
-#line 53 "limbaj.l"
+#line 61 "limbaj.l"
 { 
     yylval.intVal = atoi(yytext); 
     return INT; 
 }
 	YY_BREAK
-case 23:
+case 25:
 YY_RULE_SETUP
-#line 58 "limbaj.l"
+#line 66 "limbaj.l"
 { 
     yylval.floatVal = atof(yytext); 
     return FLOAT; 
 }
 	YY_BREAK
-case 24:
+case 26:
 YY_RULE_SETUP
-#line 63 "limbaj.l"
+#line 71 "limbaj.l"
 {
     yylval.charVal = yytext[1]; 
     return CHAR;
 }
 	YY_BREAK
-case 25:
-/* rule 25 can match eol */
+case 27:
+/* rule 27 can match eol */
 YY_RULE_SETUP
-#line 68 "limbaj.l"
+#line 76 "limbaj.l"
 {
     yylval.stringVal = strdup(yytext); 
     return STRING;
 }
 	YY_BREAK
-case 26:
-YY_RULE_SETUP
-#line 74 "limbaj.l"
-{return '{';}
-	YY_BREAK
-case 27:
-YY_RULE_SETUP
-#line 75 "limbaj.l"
-{return '}';}
-	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 76 "limbaj.l"
-{return '(';}
+#line 82 "limbaj.l"
+{return '{';}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 77 "limbaj.l"
-{return ')';}
+#line 83 "limbaj.l"
+{return '}';}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 78 "limbaj.l"
-{return ';';}
+#line 84 "limbaj.l"
+{return '(';}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 79 "limbaj.l"
-{return ',';}
+#line 85 "limbaj.l"
+{return ')';}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 80 "limbaj.l"
-{return '.';}
+#line 86 "limbaj.l"
+{return ';';}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 81 "limbaj.l"
-{return '[';}
+#line 87 "limbaj.l"
+{return ',';}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 82 "limbaj.l"
-{return ']';}
+#line 88 "limbaj.l"
+{return '.';}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 84 "limbaj.l"
-; // ignora spatii
+#line 89 "limbaj.l"
+{return '[';}
 	YY_BREAK
 case 36:
-/* rule 36 can match eol */
 YY_RULE_SETUP
-#line 85 "limbaj.l"
-{yylineno++;}
+#line 90 "limbaj.l"
+{return ']';}
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 87 "limbaj.l"
-{BEGIN comment; std::cout<<"("<<yytext<<",BCOMM)";}
+#line 92 "limbaj.l"
+; // ignora spatii
 	YY_BREAK
 case 38:
+/* rule 38 can match eol */
 YY_RULE_SETUP
-#line 88 "limbaj.l"
-;
+#line 93 "limbaj.l"
+{yylineno++;}
 	YY_BREAK
 case 39:
-/* rule 39 can match eol */
 YY_RULE_SETUP
-#line 89 "limbaj.l"
-{yylineno++;} // ignora chestii din comment-uri
+#line 95 "limbaj.l"
+{BEGIN comment; std::cout<<"("<<yytext<<",BCOMM)";}
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 90 "limbaj.l"
-{BEGIN 0; std::cout<<"("<<yytext<<",ENDCOMM)";}
+#line 96 "limbaj.l"
+;
 	YY_BREAK
 case 41:
+/* rule 41 can match eol */
 YY_RULE_SETUP
-#line 92 "limbaj.l"
-{BEGIN comment_linie; std::cout<<"("<<yytext<<",BCOMM)";}
+#line 97 "limbaj.l"
+{yylineno++;} // ignora chestii din comment-uri
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 93 "limbaj.l"
-;
+#line 98 "limbaj.l"
+{BEGIN 0; std::cout<<"("<<yytext<<",ENDCOMM)";}
 	YY_BREAK
 case 43:
-/* rule 43 can match eol */
 YY_RULE_SETUP
-#line 94 "limbaj.l"
-{yylineno++; BEGIN 0; std::cout<<"("<<"newline,ENDCOMM)";}
+#line 100 "limbaj.l"
+{BEGIN comment_linie; std::cout<<"("<<yytext<<",BCOMM)";}
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 96 "limbaj.l"
-{std::cout<<"("<<yytext<<",NECUNOSCUT)";}
+#line 101 "limbaj.l"
+;
 	YY_BREAK
 case 45:
+/* rule 45 can match eol */
 YY_RULE_SETUP
-#line 99 "limbaj.l"
+#line 102 "limbaj.l"
+{yylineno++; BEGIN 0; std::cout<<"("<<"newline,ENDCOMM)";}
+	YY_BREAK
+case 46:
+YY_RULE_SETUP
+#line 104 "limbaj.l"
+{std::cout<<"("<<yytext<<",NECUNOSCUT)";}
+	YY_BREAK
+case 47:
+YY_RULE_SETUP
+#line 107 "limbaj.l"
 ECHO;
 	YY_BREAK
-#line 1097 "lex.yy.c"
+#line 1112 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(comment):
 case YY_STATE_EOF(comment_linie):
@@ -2100,4 +2115,4 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 99 "limbaj.l"
+#line 107 "limbaj.l"

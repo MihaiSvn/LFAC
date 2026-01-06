@@ -29,11 +29,19 @@ yylval.stringVal = strdup(yytext);
 
 "<="|">="|"=="|"!="|"<"|">" {std::cout<<"("<<yytext<<",COMPARE)";  return COMPARE;}
 
+"!" {std::cout<<"("<<yytext<<",NOT)";
+yylval.stringVal=strdup(yytext);
+return NOT;}
 "++" {std::cout<<"("<<yytext<<",INC)"; return INC;}
 "--" {std::cout<<"("<<yytext<<",DEC)"; return DEC;}
-"+"|"-"|"/"|"%"|"*"|"&&"|"||" {std::cout<<"("<<yytext<<",OPERATOR)"; 
+"+"|"-" { 
     yylval.stringVal = strdup(yytext); 
-    return OPERATOR;
+    return yytext[0];
+}
+
+"*"|"/"|"%"|"&&"|"||" { 
+    yylval.stringVal = strdup(yytext); 
+    return OPERATOR; 
 }
 
 "true"|"false" {

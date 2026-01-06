@@ -6,6 +6,7 @@
 
 %{
 #include "SymTable.h"
+#include "AST.h"
 #include <algorithm>
 #include <iostream>
 #include <stdio.h>
@@ -42,14 +43,19 @@ int numberOfElementsToAdd=0;
         char charVal;
         int intVal;
         float floatVal;
+        class ASTNode* node;
 }
-%token <stringVal>TYPE CLASS_SECTION CLASS_VAR_SECTION CLASS_METHODS_SECTION CLASS GVAR_SECTION GFUN_SECTION NEW ASSIGN IF ELSE WHILE COMPARE <stringVal>ID <intVal>INT <boolVal>BOOL <floatVal>FLOAT <stringVal>STRING <charVal>CHAR PRINT MAIN_BEGIN MAIN_END <stringVal>OPERATOR INC DEC
+%token <stringVal>TYPE CLASS_SECTION CLASS_VAR_SECTION CLASS_METHODS_SECTION CLASS GVAR_SECTION GFUN_SECTION NEW ASSIGN IF ELSE WHILE COMPARE <stringVal>ID <intVal>INT <boolVal>BOOL <floatVal>FLOAT <stringVal>STRING <charVal>CHAR PRINT MAIN_BEGIN MAIN_END <stringVal>OPERATOR INC DEC NOT
 
 %type <stringVal>fun_call <stringVal>class_method_call <stringVal>class_access <stringVal>expression_elem <stringVal>compare_expr <stringVal> expression <stringVal> print_expr
 %start program
 
 %left '+' '-' 
 %left '*' '/' '%'
+%right NOT
+%right MINUS
+%left INC DEC
+
 %%
 
 program : class_section global_var_section global_fun_section main {if(errorCount==0) cout<<endl<<"The program is correct!\n";};
@@ -92,7 +98,7 @@ class_methods_section : {std::cout<<endl<<"No methods"<<endl;}
 
 class_create_instance : ID
                         {
-                        if(find(currentScope->classes.begin(),currentScope->classes.end(),$1)==currentScope->classes.end()){
+                        if(find(globalScope->classes.begin(),globalScope->classes.end(),$1)==globalScope->classes.end()){
                                 string msg="The class "+string($1)+" doesn't exists";
                                 yyerror(msg.c_str());
                         }
@@ -495,8 +501,7 @@ var_decl : TYPE ID
                 } else {
                         string msg="Variable "+string($2) + " already declared!";
                         yyerror(msg.c_str());
-                }
-                
+                }                
             }
              expression
              {
@@ -896,14 +901,29 @@ statement: ID ASSIGN
         | class_var_call 
         ;
 
-expression : expression_elem OPERATOR expression 
-        { 
+expression : NOT expression
+        {
+                if (string($2) != "bool") {
+                   yyerror("NOT operator ca only be applied to bool type!");
+               }
+               $$ = strdup("bool");
+        }
+        | '-' expression %prec MINUS
+        {
+                if (string($2) != "int" && string($2) != "float") {
+                   yyerror("Minus operator ca only be appleid to numeric values!");
+               }
+               $$ = strdup($2);
+        }
+        |expression_elem '+' expression
+        {
                 string type1=string($1);
                 string type2=string($3);
                 string resultType="int";
-                string op = string($2);
+                string op = "+";
                 cout<<"OPERATOR "<<op<<endl;
                 bool ok=true;
+
                 if (op == "+") {
                 if (type1 == "string" && type2 == "string") {
                         resultType = "string";
@@ -916,7 +936,58 @@ expression : expression_elem OPERATOR expression
                                 ok = false;
                         }
                 } 
-                else if (op == "-" || op == "*" || op == "/") {
+
+                if(ok==false){
+                string msg="Type mismatch, trying operation "+op+ " on ["+type1+"] and ["+type2+"]";
+                yyerror(msg.c_str());
+            }
+            if(type1!=type2){
+                string msg="Type mismatch, trying operation on ["+type1+"] and ["+type2+"]";
+                yyerror(msg.c_str());
+            }
+            $$ = strdup(resultType.c_str());
+            free($1);
+            free($3);
+        }
+        |expression_elem '-' expression
+        {
+                string type1=string($1);
+                string type2=string($3);
+                string resultType="int";
+                string op = "-";
+                cout<<"OPERATOR "<<op<<endl;
+                bool ok=true;
+
+                if (op == "-") {
+                if ((type1 != "int" && type1 != "float") || (type2 != "int" && type2 != "float")) {
+                        ok = false;
+                }
+                if (type1 == "float" || type2 == "float") resultType = "float";
+                else resultType = "int";
+                }
+
+                if(ok==false){
+                string msg="Type mismatch, trying operation "+op+ " on ["+type1+"] and ["+type2+"]";
+                yyerror(msg.c_str());
+            }
+            if(type1!=type2){
+                string msg="Type mismatch, trying operation on ["+type1+"] and ["+type2+"]";
+                yyerror(msg.c_str());
+            }
+            $$ = strdup(resultType.c_str());
+            free($1);
+            free($3);
+        }
+        |expression_elem OPERATOR expression 
+        { 
+                string type1=string($1);
+                string type2=string($3);
+                string resultType="int";
+                string op = string($2);
+                cout<<"OPERATOR "<<op<<endl;
+                bool ok=true;
+                
+                if (op == "*" || op == "/") {
                 if ((type1 != "int" && type1 != "float") || (type2 != "int" && type2 != "float")) {
                         ok = false;
                 }
@@ -965,6 +1036,7 @@ expression : expression_elem OPERATOR expression
            $$=$1;
         }
         | expression_elem {$$=$1;}
+        
         ;
 
 expression_elem : class_access
@@ -1019,6 +1091,10 @@ expression_elem : class_access
                         yyerror(msg.c_str());
                 }
                 $$=strdup(currentScope->getType($1).c_str());
+        }
+        | '(' expression ')'
+        {
+                $$=$2;
         }
         ;
 

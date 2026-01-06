@@ -34,6 +34,10 @@ class SymTable{
     optional<tuple<string,optional<string>,optional<string>>> searchVariableInClass(const string& className,const string& varName,SymTable* globalScope);
     optional<tuple<string,int,optional<vector<string>>,optional<string>>> searchVectorInClass(const string& className,const string& vecName,SymTable* globalScope);
 
+    bool updateVarValue(const string& varName, const string& newValue);
+    bool updateVarValueInClass(const string& className,const string& varName, const string&varType, const string& newValue,SymTable* globalScope);
+    bool updateVectorElement(const string& vecName, int idx, const string& newValue);
+    bool updateVectorElementInClass(const string& className, const string& vecName, int idx, const string& newValue, SymTable* globalScope);
     bool classExists(const string& className);
 
     bool verifParamType(const string& funName, int nr_param, const string& paramType);

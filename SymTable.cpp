@@ -138,6 +138,84 @@ if (classScope != nullptr) {
 }
 
 
+bool SymTable::updateVarValue(const string& varName, const string& newValue){
+    if (variables.find(name) != variables.end()) {
+        get<1>(variables[name]) = newValue;
+        return true;
+    }
+
+    if (parentScope != nullptr) {
+        return parentScope->updateVarValue(name, newValue);
+    }
+
+    return false;
+}
+
+bool SymTable::updateVarValueInClass(const string& className,const string& varName, const string&varType, const string& newValue,SymTable* globalScope){
+    SymTable* classScope = globalScope->getChildScope(className);
+    
+    if (classScope == nullptr) {
+        return false;
+    }
+
+    auto it = classScope->variables.find(varName);
+    
+    if (it != classScope->variables.end()) {
+        auto& [existingType, existingValue, existingClass] = it->second;
+        
+        if (existingType == varType) {
+            existingValue = newValue;
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+bool SymTable::updateVectorElement(const string& vecName, int idx, const string& newValue) {
+    if (vectors.count(vecName)) {
+        auto& [tip, marime, dateVector, clasa] = vectors[vecName];
+        
+        if (idx < 0 || idx >= marime) return false;
+
+        if (!dateVector.has_value()) {
+            dateVector = vector<string>(marime, ""); 
+        }
+
+        dateVector.value()[idx] = newValue;
+        return true;
+    }
+
+    if (parentScope != nullptr) {
+        return parentScope->updateVectorElement(vecName, idx, newValue);
+    }
+
+    return false;
+}
+
+bool SymTable::updateVectorElementInClass(const string& className, const string& vecName, int idx, const string& newValue, SymTable* globalScope) {
+    SymTable* classScope = globalScope->getChildScope(className);
+    if (classScope == nullptr) return false;
+
+    auto it = classScope->vectors.find(vecName);
+    if (it != classScope->vectors.end()) {
+        auto& [tip, marime, dateVector, clasa] = it->second;
+
+        if (idx < 0 || idx >= marime) return false;
+
+        if (!dateVector.has_value()) {
+            dateVector = vector<string>(marime, "");
+        }
+
+        dateVector.value()[idx] = newValue;
+        return true;
+    }
+
+    return false;
+}
+
+
+
 
 bool SymTable::classExists(const string& className){
     return find(classes.begin(),classes.end(),className)!=classes.end();
