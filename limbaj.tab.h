@@ -49,9 +49,11 @@ extern int yydebug;
 
   #include <string>
   #include <cstring>
+#include <vector>
+
   using namespace std;
 
-#line 55 "limbaj.tab.h"
+#line 57 "limbaj.tab.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -88,7 +90,7 @@ extern int yydebug;
     INC = 281,                     /* INC  */
     DEC = 282,                     /* DEC  */
     NOT = 283,                     /* NOT  */
-    MINUS = 284                    /* MINUS  */
+    UMINUS = 284                   /* UMINUS  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -97,15 +99,17 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 39 "limbaj.y"
+#line 46 "limbaj.y"
 
         char* stringVal;
         bool boolVal;
         char charVal;
         int intVal;
         float floatVal;
+        class ASTNode* node;
+        vector<string>* idList;
 
-#line 109 "limbaj.tab.h"
+#line 113 "limbaj.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

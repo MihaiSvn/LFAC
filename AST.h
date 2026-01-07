@@ -1,9 +1,10 @@
 #include <string>
 #include <iostream>
 #include <string.h>
-#include "SymTable.h"
+#include <vector>
 using namespace std;
 
+class SymTable;
 enum ast_type
 {
     astINT,
@@ -12,8 +13,6 @@ enum ast_type
     astFL,
     astBOOL,
     astID,
-    astVECTOR,
-    astVARCLASS,
     OP_UNAR,
     OP_BINAR,
     astERROR
@@ -39,6 +38,7 @@ public:
     string get_type();
 
     void Print();
+    void printAST(int level);
 
     ASTNode* left;
     ASTNode* right;

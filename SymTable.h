@@ -9,13 +9,14 @@
 #include <unordered_set>
 using namespace std;
 
+class ASTNode;
 class SymTable{
     public:
     string name;
     SymTable* parentScope;
     unordered_map<string,tuple<string,optional<string>,optional<string>>> variables; // nume, <tip, valoare, clasa>
     unordered_map<string,tuple<string,int,optional<vector<string>>,optional<string>>> vectors; // nume, <tip, numar_elemente, valoari, clasa>
-    unordered_map<string,tuple<string,optional<vector<string>>,optional<string>>> functions; // <nume,clasa>, <tip,parametrii,clasa(daca e metoda)>
+    unordered_map<string,tuple<string,optional<vector<string>>,optional<string>>> functions; // nume, <tip,parametrii,clasa(daca e metoda)>
     vector<string> classes; //lista clase
     vector<SymTable*> childScopes;
 
@@ -44,6 +45,20 @@ class SymTable{
     bool verifParamNumber(const string& funName,int nr_param);
     bool setFunctionParams(const string& funName, const string& varType);
     bool setFunctionClass(const string& funName);
+
+    void setFunctionBody(std::string name, ASTNode* body);
+    ASTNode* getFunctionBody(std::string name);
+
+    std::map<std::string, ASTNode*> functionBodies;
+    std::map<std::string, std::vector<std::string>> functionParamNames;
+
+    void addParamName(string funcName, string paramName) {
+        functionParamNames[funcName].push_back(paramName);
+    }
+
+    vector<string> getParamNames(string funcName) {
+        return functionParamNames[funcName];
+    }
 
     SymTable* getChildScope(const string& scopeName);
     SymTable* enterScope(const string& newScopeName);

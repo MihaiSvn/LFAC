@@ -27,7 +27,11 @@ yylval.stringVal = strdup(yytext);
 "else" {std::cout<<"("<<yytext<<",ELSE)";  return ELSE;}
 "while" {std::cout<<"("<<yytext<<",WHILE)";  return WHILE;}
 
-"<="|">="|"=="|"!="|"<"|">" {std::cout<<"("<<yytext<<",COMPARE)";  return COMPARE;}
+"<="|">="|"=="|"!="|"<"|">" {
+    yylval.stringVal = strdup(yytext);
+    std::cout<<"("<<yytext<<",COMPARE)";  return COMPARE;
+    
+    }
 
 "!" {std::cout<<"("<<yytext<<",NOT)";
 yylval.stringVal=strdup(yytext);

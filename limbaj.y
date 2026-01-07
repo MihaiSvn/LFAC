@@ -1,6 +1,8 @@
 %code requires {
   #include <string>
   #include <cstring>
+#include <vector>
+
   using namespace std;
 }
 
@@ -35,6 +37,10 @@ char* currentVarType;
 int nr_param=0;
 int vector_size=0;
 int numberOfElementsToAdd=0;
+int current_init_index=0;
+string current_init_vec_name;
+
+
 %}
 
 %union{
@@ -44,21 +50,38 @@ int numberOfElementsToAdd=0;
         int intVal;
         float floatVal;
         class ASTNode* node;
+        vector<string>* idList;
 }
 %token <stringVal>TYPE CLASS_SECTION CLASS_VAR_SECTION CLASS_METHODS_SECTION CLASS GVAR_SECTION GFUN_SECTION NEW ASSIGN IF ELSE WHILE COMPARE <stringVal>ID <intVal>INT <boolVal>BOOL <floatVal>FLOAT <stringVal>STRING <charVal>CHAR PRINT MAIN_BEGIN MAIN_END <stringVal>OPERATOR INC DEC NOT
 
-%type <stringVal>fun_call <stringVal>class_method_call <stringVal>class_access <stringVal>expression_elem <stringVal>compare_expr <stringVal> expression <stringVal> print_expr
+
+%type <node> expression expression_elem statement if_statement while_statement factor term exp
+%type <node> fun_call class_method_call class_access print_statement fun_call_params fun_decl method_call_params class_var_call print_expr class_create_instance
+%type <node> main_fun_block main_block_element fun_block block_element main var_decl vector_element vector_elements
+%type <idList> var_list
+
 %start program
 
 %left '+' '-' 
 %left '*' '/' '%'
 %right NOT
-%right MINUS
+%right UMINUS
 %left INC DEC
 
 %%
 
-program : class_section global_var_section global_fun_section main {if(errorCount==0) cout<<endl<<"The program is correct!\n";};
+program : class_section global_var_section global_fun_section main 
+{
+if(errorCount == 0 && $4 != nullptr) {
+        cout<<endl;
+        $4->printAST(0);
+        cout << "--- Start Execution ---" << endl;
+        $4->evaluate(globalScope);
+        cout << "--- Execution Finished Successfully ---" << endl;
+
+    }
+
+};
 
 //    ################# CLASE ###########################
 class_section : {std::cout<<endl<<"No classes"<<endl;}
@@ -96,29 +119,59 @@ class_methods_section : {std::cout<<endl<<"No methods"<<endl;}
             | CLASS_METHODS_SECTION function_declarations
             ;
 
-class_create_instance : ID
+class_create_instance : ID ID ASSIGN NEW ID '('')'
                         {
                         if(find(globalScope->classes.begin(),globalScope->classes.end(),$1)==globalScope->classes.end()){
                                 string msg="The class "+string($1)+" doesn't exists";
                                 yyerror(msg.c_str());
                         }
-
-                        }
-                         ID 
-                         {
-                                if(currentScope->addVariable($3,$1)==false){
-                                string msg="The class name"+string($3)+" doesn't exists";
+                                if(currentScope->addVariable($2,$1)==false){
+                                string msg="The class name"+string($2)+" doesn't exists";
                                         yyerror(msg.c_str());
                                 }
-                         }
-                         ASSIGN NEW 
-                         ID
-                          {
-                                if(string($1)!=string($7)){
+
+                                if(string($1)!=string($5)){
                                         yyerror("Type mismatch: cannot instantiate class with a different constructor type");
                                 }
-                          }
-                          '(' ')'  //trebuie verificat primul ID=clasa_existenta, al doilea ID=sa nu fei folosit, al treilea ID=aceeasi_clasa_existenta, si apoi parametrii daca e construcotr
+                                
+                                SymTable* classTemplate = globalScope->getChildScope(string($1));
+                                
+                                if (classTemplate != nullptr) {
+                
+                                        for (auto const& [varName, info] : classTemplate->variables) {
+                                        string memberName = string($2) + "." + varName;
+                                        string type = get<0>(info);
+                                        string defaultValue = get<1>(info).value_or("0");
+                                        
+                                        currentScope->addVariable(memberName, type);
+                                        currentScope->updateVarValue(memberName, defaultValue);
+                                        }
+
+                                        for (auto const& [vecName, info] : classTemplate->vectors) {
+                                                string memberName = string($2) + "." + vecName;
+                                                string type = get<0>(info);
+                                                int size = get<1>(info);
+                                                
+                                                currentScope->addVector(memberName, type, size);
+                                                cout<<"ADDED VARIABLE "<<memberName<<" WITH VALUE "<< "0" <<endl;
+
+                                                
+                                                for (int i = 0; i < size; i++) {
+                                                        currentScope->updateVectorElement(memberName, i, "0");
+                                                }
+                                                
+                                        }
+                                        cout << "DEBUG: Instantiated object " << string($2) << " of class " << string($1) << endl;
+
+                                }
+                                
+                                ASTNode* objNode = new ASTNode("id", $2, $1);
+                                ASTNode* classTypeNode = new ASTNode("id", $1, "CLASS_TYPE");
+                                
+                                $$ = new ASTNode(objNode, "NEW_CLASS", classTypeNode);
+
+                          
+                        }  //trebuie verificat primul ID=clasa_existenta, al doilea ID=sa nu fei folosit, al treilea ID=aceeasi_clasa_existenta, si apoi parametrii daca e construcotr
                         ;
 
 class_access : class_method_call
@@ -135,21 +188,26 @@ class_access : class_method_call
 
                 string classType = currentScope->getType($1);
                 auto var=currentScope->searchVariableInClass(classType,$3,globalScope);
+                string typeMember;
                 if(var.has_value()){
                         auto [tip,valoarea,clasa] = var.value();
+                        typeMember=tip;
                         if(clasa.has_value()){  //daca este o variabila de clasa
                                 string cls = clasa.value();
                                 if(cls!=classType){
                                         string msg="the variable"+string($3)+"is in a different class";
                                         yyerror(msg.c_str());
                                 } else {
-                                   $$ = strdup(tip.c_str());
                                 }
                         }
                 } else {
                         string msg="The class variable "+string($3)+" doesn't exist";
                     yyerror(msg.c_str());
                 }
+
+                string fullName = string($1) + "." + string($3);
+
+                $$ = new ASTNode("id", fullName, typeMember);           
                 
             }
             | ID '.' ID '[' INT ']'
@@ -165,8 +223,22 @@ class_access : class_method_call
 
                 string classType = currentScope->getType($1);
                 auto var=currentScope->searchVectorInClass(classType,$3,globalScope);
+                string typevec;
                 if(var.has_value()){
                         auto [tip,numberElements,valori,clasa] = var.value();
+                        typevec=tip;
+
+                        if($5 >= numberElements || $5 < 0){
+                        yyerror("Vector index out of bounds!");
+                        }
+
+                        string fullVecName = string($1) + "." + string($3);
+                        
+                        if(!currentScope->searchVector(fullVecName)) {
+                                currentScope->addVector(fullVecName, typevec, numberElements);
+                        }
+
+                       
                         if(clasa.has_value()){  //daca este o variabila de clasa
                                 string cls = clasa.value();
                                  if($5>=numberElements){
@@ -181,13 +253,20 @@ class_access : class_method_call
                                         string msg="the vector"+string($3)+"is in a different class";
                                         yyerror(msg.c_str());
                                 } else {
-                                   $$ = strdup(tip.c_str());
                                 }
                         }
                 } else {
                         string msg="The class vector "+string($3)+" doesn't exist";
                     yyerror(msg.c_str());
                 }
+
+                string fullVecName = string($1) + "." + string($3);
+
+                ASTNode* vecNode = new ASTNode("id", fullVecName, typevec);
+                ASTNode* indexNode = new ASTNode("int", to_string($5), "int");
+                $$ = new ASTNode(vecNode, "[]", indexNode);
+
+        
                 
             }
         //primul id e o varaibla clasa existenta, al doilea e o varaibila din acea clasa existenta
@@ -240,39 +319,62 @@ class_method_call : ID '.' ID  //vezi sa pui ID.fun_call si intri intr-un scope 
                                 yyerror(msg.c_str());
                         }
 
-                       
-                        calling_functions.pop();
-                        param_counts.pop();
-
-                        auto fun = aux->searchFunction($3);
+                       auto fun = aux->searchFunction($3);
                         if(fun==nullopt){
                                 yyerror("error at finding method");
                         }
-                        string tip = std::get<0>(fun.value());
-                        $$ = strdup(tip.c_str()); //returnez tipul
+                        auto [tip,parametrii,clasa] = fun.value();
+                        ASTNode* obj = new ASTNode("id", $1, clasa.value());
+                        ASTNode* method = new ASTNode("id", $3, tip);
+                        ASTNode* accessNode = new ASTNode(obj, ".", method);
+                        ASTNode* tempCall = new ASTNode(accessNode, "METHOD_CALL", $6);
+        
+                        // $$ = tempCall->evaluate(currentScope);
+
+                        calling_functions.pop();
+                        param_counts.pop();
+
+                        
                   }
             ;
 
-method_call_params : 
-            | method_call_param
-            | method_call_params ',' method_call_param
-            ;
-
-//ORICE SCHIMBARE AICI LA METHOD CALL PARAM AR TREBUI SA SE REFLECTE SI IN FUN CALL PARAM, DOAR CA ACOLO SCOPE UL E CURRENTSCOPE
-
-method_call_param : expression
+method_call_params : {$$=nullptr;}
+            | expression
             {
                 string c_fun = calling_functions.top();
                 int c_idx = param_counts.top();
                 
-                if(aux->verifParamType(c_fun, c_idx, $1) == false){
-                    string msg = "Parameter " + to_string(c_idx) + " in " + c_fun + " is of type " + $1 + " but should be different.";
+                ASTNode* evaluatedExpr = $1->evaluate(currentScope);
+
+                if(aux->verifParamType(c_fun, c_idx, evaluatedExpr->exprType) == false){
+                    string msg = "Parameter " + to_string(c_idx) + " in " + c_fun + " is of type " + $1->exprType + " but should be different.";
                     yyerror(msg.c_str());
                 }
                 param_counts.top()++;
-                free($1);
+                $$ = new ASTNode(evaluatedExpr, "ARG", nullptr);
             }
+            | expression ',' 
+            {
+                string c_fun = calling_functions.top();
+                int c_idx = param_counts.top();
+                
+                ASTNode* evaluatedExpr = $1->evaluate(currentScope);
+                
+                if(aux->verifParamType(c_fun, c_idx, evaluatedExpr->exprType) == false){
+                yyerror("Type mismatch in method call parameters");
+                }
+                
+                param_counts.top()++;
+                $<node>$ = evaluatedExpr; 
+             }
+             method_call_params
+             {
+                $$ = new ASTNode($<node>3, "ARG", $4);
+             }
             ;
+
+//ORICE SCHIMBARE AICI LA METHOD CALL PARAM AR TREBUI SA SE REFLECTE SI IN FUN CALL PARAM, DOAR CA ACOLO SCOPE UL E CURRENTSCOPE
+
 
 //primul ID trebuie sa fie o varaibila de clasa existenta deja, al doilea id trebuie sa fie o metoda in acea clasa
 class_var_call : ID '.' ID ASSIGN expression
@@ -286,13 +388,21 @@ class_var_call : ID '.' ID ASSIGN expression
                 auto var = currentScope->searchVariableInClass(className, $3, globalScope);
                 if(var.has_value()) {
                 string memberType = get<0>(var.value());
-                string exprType = $5;
-                if(memberType != exprType) {
-                        string msg = "Cannot assign [" + exprType + "] to member '" + string($1) + "." + string($3) + "' of type [" + memberType + "]";
-                        yyerror(msg.c_str());
+                string exprType = $5->exprType;
+                        if(memberType != exprType) {
+                                string msg = "Cannot assign [" + exprType + "] to member '" + string($1) + "." + string($3) + "' of type [" + memberType + "]";
+                                yyerror(msg.c_str());
+                        }
+
+                        currentScope->updateVarValue(string($1)+'.'+string($3), $5->getStringValue());
+
+                        string fullName = string($1) + "." + string($3);
+
+                        ASTNode* nod = new ASTNode("id", fullName, memberType);   
+
+                        $$ = new ASTNode(nod,":=",$5);
                 }
-                }
-                free($5);
+                
                 }
             | ID '.' ID INC
             {
@@ -315,6 +425,20 @@ class_var_call : ID '.' ID ASSIGN expression
                 string msg = "Class member '" + string($3) + "' not found in class '" + className + "'";
                 yyerror(msg.c_str());
                 }
+
+                auto [tip,val,clasa] = var.value(); 
+                string memberType = std::get<0>(var.value());
+                // currentScope->updateVarValueInClass($1,$3, memberType, val+1,globalScope);
+
+               
+                string fullName = string($1) + "." + string($3);
+
+                ASTNode* nod = new ASTNode("id", fullName, memberType);   
+                ASTNode* nod_c = new ASTNode("id", fullName, memberType);   
+                ASTNode* unu = new ASTNode("int","1","int");
+                ASTNode* plus=new ASTNode(nod_c,"+",unu);
+
+                $$ = new ASTNode(nod,":=",plus);
             }
             | ID '.' ID DEC
             {
@@ -337,6 +461,17 @@ class_var_call : ID '.' ID ASSIGN expression
                 string msg = "Class member '" + string($3) + "' not found in class '" + className + "'";
                 yyerror(msg.c_str());
                 }
+                string memberType = std::get<0>(var.value());
+
+               
+                string fullName = string($1) + "." + string($3);
+
+                ASTNode* nod = new ASTNode("id", fullName, memberType);   
+                ASTNode* nod_c = new ASTNode("id", fullName, memberType);   
+                ASTNode* unu = new ASTNode("int","1","int");
+                ASTNode* minus=new ASTNode(nod_c,"-",unu);
+
+                $$ = new ASTNode(nod,":=",minus);
             }
             | ID '.' ID '[' INT ']' ASSIGN expression
                 {
@@ -357,14 +492,28 @@ class_var_call : ID '.' ID ASSIGN expression
                         string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the index can't be negative!)";
                         yyerror(msg.c_str());
                 }
+
+               
                 string memberType = get<0>(var.value());
-                string exprType = $8;
+                string exprType = $8->exprType;
                 if(memberType != exprType) {
                         string msg = "Cannot assign [" + exprType + "] to member '" + string($1) + "." + string($3) + "' of type [" + memberType + "]";
                         yyerror(msg.c_str());
+                        }
+                        currentScope->updateVectorElement(string($1)+'.'+string($3), $5 , $8->getStringValue());
+
+                        string fullVecName = string($1) + "." + string($3);
+        
+                        ASTNode* vectorNode = new ASTNode("id_vector", fullVecName, memberType);
+                        
+                        ASTNode* indexNode = new ASTNode("int", to_string($5), "int");
+
+                        ASTNode* vectorAccess = new ASTNode(vectorNode, "[]", indexNode);
+                        vectorAccess->exprType = memberType;
+
+                        $$ = new ASTNode(vectorAccess, ":=", $8);
                 }
-                }
-                free($8);
+                
                 }
             | ID '.' ID '[' INT ']' INC
             {
@@ -392,10 +541,31 @@ class_var_call : ID '.' ID ASSIGN expression
                                 "' because it is of type [" + memberType + "] (not numeric)";
                         yyerror(msg.c_str());
                 }
+
+                string fullName = string($1) + "." + string($3);
+
+                ASTNode* destVecName = new ASTNode("id", fullName, memberType);
+                ASTNode* destIndex = new ASTNode("int", to_string($5), "int");
+                ASTNode* vectorDest = new ASTNode(destVecName, "[]", destIndex);
+
+                
+                ASTNode* readVecName = new ASTNode("id", fullName, memberType);
+                ASTNode* readIndex = new ASTNode("int", to_string($5), "int");
+                ASTNode* vectorRead = new ASTNode(readVecName, "[]", readIndex);
+
+               
+                ASTNode* unu = new ASTNode("int", "1", "int");
+                ASTNode* plus = new ASTNode(vectorRead, "+", unu);
+
+                
+                $$ = new ASTNode(vectorDest, ":=", plus);
+
                 } else {
                 string msg = "Class member '" + string($3) + "' not found in class '" + className + "'";
                 yyerror(msg.c_str());
                 }
+
+                
             }
             | ID '.' ID '[' INT ']' DEC
             {
@@ -423,10 +593,31 @@ class_var_call : ID '.' ID ASSIGN expression
                                 "' because it is of type [" + memberType + "] (not numeric)";
                         yyerror(msg.c_str());
                 }
+
+                string fullName = string($1) + "." + string($3);
+
+                ASTNode* destVecName = new ASTNode("id", fullName, memberType);
+                ASTNode* destIndex = new ASTNode("int", to_string($5), "int");
+                ASTNode* vectorDest = new ASTNode(destVecName, "[]", destIndex);
+
+                
+                ASTNode* readVecName = new ASTNode("id", fullName, memberType);
+                ASTNode* readIndex = new ASTNode("int", to_string($5), "int");
+                ASTNode* vectorRead = new ASTNode(readVecName, "[]", readIndex);
+
+               
+                ASTNode* unu = new ASTNode("int", "1", "int");
+                ASTNode* minus = new ASTNode(vectorRead, "-", unu);
+
+                
+                $$ = new ASTNode(vectorDest, ":=", minus);
+
+
                 } else {
                 string msg = "Class member '" + string($3) + "' not found in class '" + className + "'";
                 yyerror(msg.c_str());
                 }
+                
             }
             ;
 
@@ -460,26 +651,58 @@ var_decl : TYPE ID
                         string msg="Variable "+string($2) + " already declared!";
                         yyerror(msg.c_str());
                 }
+                string defaultValue = "0";
+                if (string($1) == "float") defaultValue = "0.0";
+                else if (string($1) == "bool") defaultValue = "true";
+                else if (string($1) == "string") defaultValue = "";
+                else if (string($1) == "char") defaultValue = "";
+                ASTNode* varNode = new ASTNode("id", $2, currentVarType);
+                ASTNode* defaultValNode = new ASTNode($1, defaultValue, $1);
+                
+                $$ = new ASTNode(varNode, ":=", defaultValNode);
         }
             | TYPE ID ',' var_list
             {
-                optional<string> className = nullopt;
+                
 
-               if(currentScope != nullptr && currentScope->parentScope != nullptr) {
-                  string parentName = currentScope->name;
-            
-                  auto& classes = globalScope->classes;
-                  if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
-                     className = parentName;
-                        cout<<"added function "<<$2<<" to class "<<parentName<<endl;
-                  }
-                }
-                if(currentScope->addVariable($2,$1,nullopt,className)){
-                        currentVarName= $2;
-                        currentVarType = $1;
-                } else {
-                        string msg="Variable "+string($2) + " already declared!";
-                        yyerror(msg.c_str());
+                string type = $1;
+                vector<string>* ids = $4;
+                ids->push_back($2);
+
+                ASTNode* rootBlock = nullptr;
+
+                string defVal;
+                if (type == "int") defVal = "0";
+                else if (type == "float") defVal = "0.0";
+                else if (type == "bool") defVal = "true";
+                else if (type == "char") defVal = " "; 
+                else if (type == "string") defVal = "";
+                else defVal = "0";
+                for(string idName : *ids) {
+                        optional<string> className = nullopt;
+
+                        if(currentScope != nullptr && currentScope->parentScope != nullptr) {
+                                string parentName = currentScope->name;
+                        
+                                auto& classes = globalScope->classes;
+                                if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
+                                className = parentName;
+                                        cout<<"added function "<<idName<<" to class "<<parentName<<endl;
+                                }
+                                }
+                                if(currentScope->addVariable(idName,$1,nullopt,className)){
+                                        currentVarType = $1;
+                                } else {
+                                        string msg="Variable "+idName + " already declared!";
+                                        yyerror(msg.c_str());
+                                }
+
+                        ASTNode* varNode = new ASTNode("id", idName, type);
+                        ASTNode* defValNode = new ASTNode(type, defVal, type);
+                        ASTNode* assign = new ASTNode(varNode, ":=", defValNode);
+
+                        if (rootBlock == nullptr) rootBlock = assign;
+                        else rootBlock = new ASTNode(assign, "BLOCK", rootBlock);
                 }
             }
             | TYPE ID ASSIGN
@@ -506,13 +729,17 @@ var_decl : TYPE ID
              expression
              {
                 string typeVarToBeAssigned=$1;
-                string typeExpr=$5;
+                string typeExpr=$5->exprType;
                 if(typeVarToBeAssigned!=typeExpr){
                         string msg="Type mismatch at declaration, trying operation on ["+typeVarToBeAssigned+"] and ["+typeExpr+"]";
                         yyerror(msg.c_str());
                 }
-                cout<<"TYPE TO ASSIGN: "<<typeVarToBeAssigned<<endl;
-                free($5);
+                if($5->type != astERROR){
+                        currentScope->updateVarValue($2, $5->getStringValue());
+                }
+                cout<<"TIPUL MEU E ASTA UAII "<<$1<<endl;
+                ASTNode* varNode = new ASTNode("id", $2, $1);
+                $$ = new ASTNode(varNode, ":=", $5);
              }
              | TYPE ID '[' INT ']'
              {
@@ -534,10 +761,30 @@ var_decl : TYPE ID
                         string msg="Vecotr "+string($2) + " already declared!";
                         yyerror(msg.c_str());
                 }
+                ASTNode* rootBlock = nullptr;
+                string defaultValue = "0";
+
+                for (int i = 0; i < $4; i++) {
+                        ASTNode* indexNode = new ASTNode("int", to_string(i), "int");
+                        ASTNode* vecNode = new ASTNode("id_vector", $2, $1);
+                        ASTNode* access = new ASTNode(vecNode, "[]", indexNode);
+                        
+                        ASTNode* zero = new ASTNode($1, defaultValue, $1);
+                        
+                        ASTNode* assign = new ASTNode(access, ":=", zero);
+
+                        if (rootBlock == nullptr) {
+                        rootBlock = assign;
+                        } else {
+                        rootBlock = new ASTNode(assign, "BLOCK", rootBlock);
+                        }
+                }
+                $$ = rootBlock;
 
              }
              | TYPE ID '[' INT ']' ASSIGN
              {
+                current_init_index=0;
                  optional<string> className = nullopt;
 
                if(currentScope != nullptr && currentScope->parentScope != nullptr) {
@@ -557,10 +804,9 @@ var_decl : TYPE ID
                         string msg="Vecotr "+string($2) + " already declared!";
                         yyerror(msg.c_str());
                 }
-
+                current_init_vec_name=string($2);
                 numberOfElementsToAdd=$4;
                 cout<<"NUMBER OF ELEMENTS TO ADD "<<numberOfElementsToAdd<<endl;
-
              }
               '{' vector_elements '}'
               {
@@ -568,11 +814,18 @@ var_decl : TYPE ID
                        string msg="Vector init received too few arguments";
                         yyerror(msg.c_str());  
                 }
+                $$=nullptr;
               }
             ;
 
 vector_elements: vector_element
+                {
+                        $$=$1;
+                }
              | vector_element ',' vector_elements
+             {
+                $$ = new ASTNode($1,"BLOCK",$3);
+             }
 
 vector_element: expression
                 {
@@ -580,55 +833,41 @@ vector_element: expression
                                 string msg="Vector init received too many arguments";
                                 yyerror(msg.c_str());
                         }
-                        if(string($1)!=string(currentVarType)){
-                                string msg="Tried adding a variable of type "+ string($1) + " to a vector of type "+string(currentVarType);
+                        if($1->exprType!=string(currentVarType)){
+                                string msg="Tried adding a variable of type "+ $1->exprType + " to a vector of type "+string(currentVarType);
                                 yyerror(msg.c_str());
                         }
+                        
+
+                        if($1->exprType != currentVarType) {
+                        string msg = "Type mismatch in vector init: expected " + string(currentVarType) + " but got "+$1->exprType;
+                        yyerror(msg.c_str());
+                        }
+
+                        if(!currentScope->updateVectorElement(current_init_vec_name, current_init_index, $1->getStringValue())) {
+                                yyerror("Index out of bounds during initialization!");
+                        }
+
+                        ASTNode* indexNode = new ASTNode("int", to_string(current_init_index), "int");
+                        ASTNode* vecNode = new ASTNode("id_vector", current_init_vec_name, currentVarType);
+                        ASTNode* access = new ASTNode(vecNode, "[]", indexNode);
+
+                    
+                        $$ = new ASTNode(access, ":=", $1);
+                        current_init_index++;
                         numberOfElementsToAdd--;
-                        //should add value to vector<string> here
                 }
 
-var_list: ID
-                {
-                        optional<string> className = nullopt;
-
-                        if(currentScope != nullptr && currentScope->parentScope != nullptr) {
-                        string parentName = currentScope->name;
-                
-                        auto& classes = globalScope->classes;
-                        if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
-                        className = parentName;
-                                cout<<"added variable "<<$1<<" to class "<<parentName<<endl;
-                        }
-                        }
-                        if(currentScope->addVariable($1,currentVarType,nullopt,className)){
-                                currentVarName=$1;
-                        } else {
-                                string msg="Variable "+string($1) + " already declared!";
-                                yyerror(msg.c_str());
-                        }
- 
-                }
-           | ID ',' var_list
-                {
-                        optional<string> className = nullopt;
-
-                        if(currentScope != nullptr && currentScope->parentScope != nullptr) {
-                        string parentName = currentScope->name;
-                
-                        auto& classes = globalScope->classes;
-                        if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
-                        className = parentName;
-                                cout<<"added variable "<<$1<<" to class "<<parentName<<endl;
-                        }
-                        }
-                        if(currentScope->addVariable($1,currentVarType,nullopt,className)){
-                                currentVarName = $1;
-                        } else {
-                                string msg="Variable "+string($1) + " already declared!";
-                                yyerror(msg.c_str());
-                        }
-                }
+var_list: ID 
+    { 
+        $$ = new vector<string>(); 
+        $$->push_back($1); 
+    }
+    | ID ',' var_list 
+    { 
+        $3->push_back($1); 
+        $$ = $3; 
+    }
 //    ################# FUNCTII ###########################
 
 global_fun_section : {std::cout<<endl<<"No global functions"<<endl;}
@@ -665,8 +904,11 @@ fun_decl : TYPE ID '('
         } fun_decl_params ')' '{' fun_block 
          '}'
          {
+                ASTNode* bodyContent = $8;
                 currentScope = currentScope->exitScope();
+                currentScope->setFunctionBody($2, bodyContent);
                 parentScope = currentScope;
+                $$=nullptr;
          }
             ;
 fun_decl_params : 
@@ -676,27 +918,45 @@ fun_decl_params :
 
 fun_param : TYPE ID
         {
+                parentScope->addParamName(funName, $2);
                 parentScope->setFunctionParams(funName,$1);
                 cout<<"adding variable "<<$2<<"to scope "<<currentScope->name<<endl;
                 currentScope->addVariable($2,$1);
         }
             ;
 
-fun_block : 
+fun_block : {$$=nullptr;} 
         | fun_block block_element
+        {
+                if ($1 == nullptr) {
+                    $$ = $2;
+                } else if ($2 == nullptr) {
+                    $$ = $1;
+                } else {
+                    $$ = new ASTNode($1, "BLOCK", $2);
+                }
+        }
         ;
 
 //ORICE MODIFICARE IN block_element MAI PUTIN var_decl AR TREBUI SCHIMBATA SI IN main_block_element
 block_element : statement ';'
-            | statement { yyerror("Missing semicolon");}
+                { $$ = $1; }
+            | statement { yyerror("Missing semicolon"); $$ = $1; }
             | var_decl ';'
-            | var_decl { yyerror("Missing semicolon");}
+                { $$ = nullptr; }
+            | var_decl { yyerror("Missing semicolon"); $$ = nullptr; }
             | class_create_instance ';'
+                { $$ = nullptr; }
             | class_method_call ';'
+                { $$ = $1; }
             | fun_call ';'
+                { $$ = $1; }
             | print_statement ';'
+                { $$ = $1; }
             | if_statement
+                { $$ = $1; }
             | while_statement
+                { $$ = $1; }
             ;
 
 
@@ -723,46 +983,61 @@ fun_call : ID
                         yyerror(msg.c_str());
                 }
 
+                auto fun=currentScope->searchFunction(current_fun);
+                auto [tip,params,clasa]=fun.value();
+
+                ASTNode* nameNode = new ASTNode("id", (char*)current_fun.c_str(), tip);
+                ASTNode* tempCall = new ASTNode(nameNode, "CALL", $4);
+                ASTNode* result = tempCall->evaluate(globalScope);
+                
+                $$ = result;
+
                 calling_functions.pop();
                 param_counts.pop();
-
-                auto fun = currentScope->searchFunction($1);
-                if(fun==nullopt){
-                        yyerror("error at finding functiion");
-                }
-                string tip = std::get<0>(fun.value());
-                $$ = strdup(tip.c_str()); //returnez tipul
         }
         ;
 
-fun_call_params : 
-            | fun_call_param
-            | fun_call_params ',' fun_call_param
-            ;
-
-//ORICE SCHIMBARE AICI LA FUN CALL PARAM AR TREBUI SA SE REFLECTE SI IN METHOD CALL PARAM, DOAR CA ACOLO SCOPE UL E AUX
-fun_call_param : expression
+fun_call_params : {$$=nullptr;}
+            | expression
             {
                 string c_fun = calling_functions.top();
                 int c_idx = param_counts.top();
                 
-                if(currentScope->verifParamType(c_fun, c_idx, $1) == false){
-                    string msg = "Parameter " + to_string(c_idx) + " in " + c_fun + " is of type " + $1 + " but should be different.";
+
+                if(currentScope->verifParamType(c_fun, c_idx, $1->exprType) == false){
+                    string msg = "Parameter " + to_string(c_idx) + " in " + c_fun + " is of type " + $1->exprType + " but should be different.";
                     yyerror(msg.c_str());
                 }
                 param_counts.top()++;
-                free($1);
+                $$ = new ASTNode($1, "ARG", nullptr);
+            }
+            | expression ','
+            {
+                string c_fun = calling_functions.top();
+                int c_idx = param_counts.top();
+                if(currentScope->verifParamType(c_fun, c_idx, $1->exprType) == false){
+                     yyerror("Type mismatch");
+                }
+                param_counts.top()++;
+                $<node>$ = $1;
+            }
+            fun_call_params
+            {
+                $$ = new ASTNode($<node>3, "ARG", $4);
             }
             ;
+
+//ORICE SCHIMBARE AICI LA FUN CALL PARAM AR TREBUI SA SE REFLECTE SI IN METHOD CALL PARAM, DOAR CA ACOLO SCOPE UL E AUX
+
 
 
 //    ################# FUNCTII PREDEFINITE ###########################
 
-print_expr: expression
+print_expr: expression {$$=$1;}
             ;
 
-print_statement : PRINT '(' print_expr ')' {cout<<endl<<$3<<endl;
-        free($3);
+print_statement : PRINT '(' print_expr ')' {
+        $$= new ASTNode($3,"PRINT",nullptr);
         }
         ;
 
@@ -772,21 +1047,22 @@ print_statement : PRINT '(' print_expr ')' {cout<<endl<<$3<<endl;
 
 //    ######## ARITHMETIC ########
 
-statement: ID ASSIGN
+statement: ID ASSIGN expression
         {
                 if(currentScope->searchVariable($1)==nullopt){
                         string msg="The variable "+string($1)+" doesn't exist!";
                         yyerror(msg.c_str());
                 }
-        }
-         expression {
-                string typeVarToBeAssigned=currentScope->getType($1);
-                if(typeVarToBeAssigned!=string($4)){
-                        string msg="Type mismatch at assignment, trying operation on ["+typeVarToBeAssigned+"] and ["+string($4)+"]";
+
+                 string typeVarToBeAssigned=currentScope->getType($1);
+                string type=$3->exprType;
+                if(typeVarToBeAssigned!=type){
+                        string msg="Type mismatch at assignment, trying operation on ["+typeVarToBeAssigned+"] and ["+type+"]";
                         yyerror(msg.c_str());
                 }
-                free($4);
-         }
+                ASTNode* idNode = new ASTNode("id", $1, type);
+                $$ = new ASTNode(idNode, ":=", $3);
+        }
         | ID INC
         {
                 if(currentScope->searchVariable($1)==nullopt){
@@ -796,11 +1072,21 @@ statement: ID ASSIGN
                 string typeVarToBeAssigned=currentScope->getType($1);
                 cout<<"TYPE TO ASSIGN: "<<typeVarToBeAssigned<<endl;
                 if(typeVarToBeAssigned=="int" || typeVarToBeAssigned=="float"){
-                        //change value
+                        ASTNode* idNode = new ASTNode("id", $1, typeVarToBeAssigned);
+                        ASTNode* unu = new ASTNode("int", "1", "int");
+                        ASTNode* plus = new ASTNode(idNode, "+", unu);
+                        $$ = new ASTNode(idNode, ":=", plus);
                 } else {
                         string msg="The variable "+string($1)+ " isn't a float or an int, you can't increment it!";
                         yyerror(msg.c_str());
                 }
+                ASTNode* dest = new ASTNode("id", $1, typeVarToBeAssigned);
+            
+                ASTNode* source = new ASTNode("id", $1, typeVarToBeAssigned);
+                ASTNode* unu = new ASTNode("int", "1", "int");
+                ASTNode* plus = new ASTNode(source, "+", unu);
+                
+                $$ = new ASTNode(dest, ":=", plus);
         }
         | ID DEC
         {
@@ -811,11 +1097,21 @@ statement: ID ASSIGN
                 string typeVarToBeAssigned=currentScope->getType($1);
                 cout<<"TYPE TO ASSIGN: "<<typeVarToBeAssigned<<endl;
                 if(typeVarToBeAssigned=="int" || typeVarToBeAssigned=="float"){
-                        //change value
+                        ASTNode* idNode = new ASTNode("id", $1, typeVarToBeAssigned);
+                        ASTNode* unu = new ASTNode("int", "1", "int");
+                        ASTNode* minus = new ASTNode(idNode, "-", unu);
+                        $$ = new ASTNode(idNode, ":=", minus);
                 } else {
                         string msg="The variable "+string($1)+ " isn't a float or an int, you can't increment it!";
                         yyerror(msg.c_str());
                 }
+                ASTNode* dest = new ASTNode("id", $1, typeVarToBeAssigned);
+            
+                ASTNode* source = new ASTNode("id", $1, typeVarToBeAssigned);
+                ASTNode* unu = new ASTNode("int", "1", "int");
+                ASTNode* minus = new ASTNode(source, "-", unu);
+                
+                $$ = new ASTNode(dest, ":=", minus);
         }
         | ID '[' INT ']' ASSIGN
         {
@@ -838,11 +1134,15 @@ statement: ID ASSIGN
         }
          expression {
                 string typeVarToBeAssigned=currentScope->getType($1);
-                if(typeVarToBeAssigned!=string($7)){
-                        string msg="Type mismatch at assignment, trying operation on ["+typeVarToBeAssigned+"] and ["+string($7)+"]";
+                string type = $7->exprType;
+                if(typeVarToBeAssigned!=type){
+                        string msg="Type mismatch at assignment, trying operation on ["+typeVarToBeAssigned+"] and ["+type+"]";
                         yyerror(msg.c_str());
                 }
-                free($7);
+                ASTNode* vecName = new ASTNode("id_vector", $1, typeVarToBeAssigned);
+                ASTNode* indexNode = new ASTNode("int", to_string($3), "int");
+                ASTNode* access = new ASTNode(vecName, "[]", indexNode);
+                $$ = new ASTNode(access, ":=", $7);
          }
         | ID '[' INT ']' INC
         {
@@ -870,6 +1170,14 @@ statement: ID ASSIGN
                         string msg="The variable "+string($1)+ " isn't a float or an int, you can't increment it!";
                         yyerror(msg.c_str());
                 }
+
+                ASTNode* vecName = new ASTNode("id_vector", $1, typeVarToBeAssigned);
+                ASTNode* indexNode = new ASTNode("int", to_string($3), "int");
+                ASTNode* access = new ASTNode(vecName, "[]", indexNode);
+                ASTNode* unu = new ASTNode("int", "1", "int");
+                ASTNode* plus = new ASTNode(access, "+", unu);
+                
+                $$ = new ASTNode(access, ":=", plus);
         }
         | ID '[' INT ']' DEC
         {
@@ -897,28 +1205,21 @@ statement: ID ASSIGN
                         string msg="The variable "+string($1)+ " isn't a float or an int, you can't increment it!";
                         yyerror(msg.c_str());
                 }
+                ASTNode* vecName = new ASTNode("id_vector", $1, typeVarToBeAssigned);
+                ASTNode* indexNode = new ASTNode("int", to_string($3), "int");
+                ASTNode* access = new ASTNode(vecName, "[]", indexNode);
+                ASTNode* unu = new ASTNode("int", "1", "int");
+                ASTNode* minus = new ASTNode(access, "-", unu);
+                
+                $$ = new ASTNode(access, ":=", minus);
         }
         | class_var_call 
         ;
 
-expression : NOT expression
+exp : exp '+' term
         {
-                if (string($2) != "bool") {
-                   yyerror("NOT operator ca only be applied to bool type!");
-               }
-               $$ = strdup("bool");
-        }
-        | '-' expression %prec MINUS
-        {
-                if (string($2) != "int" && string($2) != "float") {
-                   yyerror("Minus operator ca only be appleid to numeric values!");
-               }
-               $$ = strdup($2);
-        }
-        |expression_elem '+' expression
-        {
-                string type1=string($1);
-                string type2=string($3);
+                string type1=$1->exprType;
+                string type2=$3->exprType;
                 string resultType="int";
                 string op = "+";
                 cout<<"OPERATOR "<<op<<endl;
@@ -945,14 +1246,12 @@ expression : NOT expression
                 string msg="Type mismatch, trying operation on ["+type1+"] and ["+type2+"]";
                 yyerror(msg.c_str());
             }
-            $$ = strdup(resultType.c_str());
-            free($1);
-            free($3);
+            $$ = new ASTNode($1, "+", $3);
         }
-        |expression_elem '-' expression
+        |exp '-' term
         {
-                string type1=string($1);
-                string type2=string($3);
+                string type1=$1->exprType;
+                string type2=$3->exprType;
                 string resultType="int";
                 string op = "-";
                 cout<<"OPERATOR "<<op<<endl;
@@ -974,14 +1273,16 @@ expression : NOT expression
                 string msg="Type mismatch, trying operation on ["+type1+"] and ["+type2+"]";
                 yyerror(msg.c_str());
             }
-            $$ = strdup(resultType.c_str());
-            free($1);
-            free($3);
+            $$ = new ASTNode($1, "-", $3);
+
         }
-        |expression_elem OPERATOR expression 
-        { 
-                string type1=string($1);
-                string type2=string($3);
+        | term {$$=$1;}
+        ;
+
+term: term OPERATOR factor
+        {
+                string type1=$1->exprType;
+                string type2=$3->exprType;
                 string resultType="int";
                 string op = string($2);
                 cout<<"OPERATOR "<<op<<endl;
@@ -1017,134 +1318,163 @@ expression : NOT expression
                 string msg="Type mismatch, trying operation on ["+type1+"] and ["+type2+"]";
                 yyerror(msg.c_str());
             }
-            $$ = strdup(resultType.c_str());
-            free($1);
-            free($3); 
+            $$ = new ASTNode($1, op, $3);
         }
-        | expression_elem INC  
+        | factor
         {
-            if(string($1)!="int" && string($1)!="float"){
-                yyerror("Cannot increment a non-numeric value!");
-            }    
-            $$=$1; 
+                $$=$1;
         }
-        | expression_elem DEC  
-        {
-            if(string($1)!="int" && string($1)!="float"){
-                yyerror("Cannot increment a non-numeric value!");
-            }
-           $$=$1;
-        }
-        | expression_elem {$$=$1;}
-        
         ;
-
-expression_elem : class_access
-        | fun_call
+factor: '-' factor %prec UMINUS 
+        { 
+                cout<<$2->exprType<<" TIPUL ASTA NU E NUMERIC CICA!"<<endl;
+                if ($2->exprType != "int" && $2->exprType != "float") {
+                   yyerror("Minus operator ca only be appleid to numeric values!");
+               }
+               $$ = new ASTNode($2, "NEG", nullptr);
+        }
+       | NOT factor             
+       { 
+                if ($2->exprType != "bool") {
+                   yyerror("NOT operator ca only be applied to bool type!");
+               }
+               $$ = new ASTNode($2, "NOT", nullptr);
+        }
+       | '(' expression ')'    { $$ = $2; }
+       | expression_elem       { $$ = $1; }
+       ;
+expression_elem : class_access { $$ = $1; }
+        | fun_call { $$ = $1; }
         | INT
         {
-                $$=strdup("int");
+            $$ = new ASTNode("int", to_string($1), "int");
         }
         | FLOAT
         {
-                $$=strdup("float");
+            $$ = new ASTNode("float", to_string($1), "float");
         }
         | BOOL
         {
-                $$=strdup("bool");
-
+            $$ = new ASTNode("bool", $1 ? "true" : "false", "bool");
         }
         | CHAR
         {
-
-                $$=strdup("char");
+            $$ = new ASTNode("char", string(1, $1), "char");
         }
         | STRING
         {
-                $$=strdup("string");
-
+            $$ = new ASTNode("string", $1, "string");
         }
         | ID
         {
-                if(currentScope->searchVariable($1)==nullopt){
-                        string msg="Variable "+string($1)+" doesn't exist";
-                        yyerror(msg.c_str());
-                }
-                $$=strdup(currentScope->getType($1).c_str());
+            if(currentScope->searchVariable($1) == nullopt){
+                string msg = "Variable " + string($1) + " doesn't exist";
+                yyerror(msg.c_str());
+            }
+            $$ = new ASTNode("id", $1, currentScope->getType($1));
         }
         | ID '[' INT ']'
         {
-                 auto var=currentScope->searchVector($1);
-                if(var.has_value()){
-                        int numberElements= get<1>(var.value());
-                        if($3>=numberElements){
-                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
-                        yyerror(msg.c_str());
-                        }
-                          if($3<0){
-                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the index can't be negative!)";
-                        yyerror(msg.c_str());
-                        }
+            auto var = currentScope->searchVector($1);
+            if(var.has_value()){
+                int numberElements = get<1>(var.value());
+                if($3 >= numberElements){
+                    string msg = "Tried accessing vector index " + to_string($3) + " that doesn't exist (max is " + to_string(numberElements-1) + ")";
+                    yyerror(msg.c_str());
                 }
-                if(var==nullopt){
-                        string msg="The vector "+string($1)+" doesn't exist!";
-                        yyerror(msg.c_str());
+                if($3 < 0){
+                    yyerror("Vector index can't be negative!");
                 }
-                $$=strdup(currentScope->getType($1).c_str());
+            } else {
+                string msg = "The vector " + string($1) + " doesn't exist!";
+                yyerror(msg.c_str());
+            }
+            
+            ASTNode* vecName = new ASTNode("id_vector", $1, currentScope->getType($1));
+            ASTNode* indexNode = new ASTNode("int", to_string($3), "int");
+            $$ = new ASTNode(vecName, "[]", indexNode);
         }
-        | '(' expression ')'
-        {
-                $$=$2;
-        }
+       
         ;
 
 //    ######## BOOLEAN ########
 
-compare_expr : expression COMPARE expression
-            {
-                cout << "DEBUG: Comparing [" << $1 << "] with [" << $3 << "]" << endl;
-   
-                if(string($1)!=string($3)){
-                         string msg="Type mismatch at compare, trying operation on ["+string($1)+"] and ["+string($3)+"]";
-                yyerror(msg.c_str());
+expression : exp COMPARE exp
+            {   
+                if ($1->exprType != $3->exprType) {
+                    string msg = "Type mismatch at compare: trying to compare [" + 
+                                 $1->exprType + "] with [" + $3->exprType + "]";
+                    yyerror(msg.c_str());
                 }
-                //ar trebui adaucat si verific compare ul
-                $$=strdup("bool");
 
-                free($1);
-                free($3);
+                cout<<"WHAT THE SIGMA COMPARE "<<string($2)<<endl;
+                $$ = new ASTNode($1, string($2), $3);
+                
+                $$->exprType = "bool";
 
+                cout << "Nod de comparare creat cu tipul: " << $$->exprType << endl;
+            }
+            | exp {$$=$1;}
+            ;
+
+if_statement : IF '(' expression ')' '{' main_fun_block '}'
+            {
+                $$ = new ASTNode($3, "IF", $6);
+            }
+            | IF '(' expression ')' '{' main_fun_block '}' ELSE '{' main_fun_block '}'
+            {
+                ASTNode* bodyNode = new ASTNode($6, "IF_ELSE_LINK", $10);
+                $$ = new ASTNode($3, "IF", bodyNode);
+            }
+            | IF '(' expression ')' '{' main_fun_block '}' ELSE if_statement
+            {
+                ASTNode* bodyNode = new ASTNode($6, "IF_ELSE_LINK", $9);
+                $$ = new ASTNode($3, "IF", bodyNode);
             }
             ;
 
-if_statement : IF '(' compare_expr ')' '{' main_fun_block '}'
-            | IF '(' compare_expr ')' '{' main_fun_block '}' ELSE '{' main_fun_block '}'
-            | IF '(' compare_expr ')' '{' main_fun_block '}' ELSE if_statement
-            ;
-
-while_statement : WHILE '(' compare_expr ')' '{' main_block_element '}'
+while_statement : WHILE '(' expression ')' '{' main_fun_block '}'
+             {
+                $$ = new ASTNode($3, "WHILE", $6);
+             }
             ;
 
 //    ################# MAIN ###########################
 
 
-main : MAIN_BEGIN main_fun_block MAIN_END;
+main : MAIN_BEGIN main_fun_block MAIN_END {
+        if ($2 == nullptr) cout << "DEBUG: main_fun_block e NULL!" << endl;
+    $$ = $2;
+    };
 
 //main fun block nu permite declararea variabilelelor, diferit de fun_block care permite
 
 //ORICE MODIFICARE IN main_block_element AR TREBUI SCHIMBATA SI IN block_element
 
-main_fun_block : 
+main_fun_block : main_block_element
+                {
+                        $$=$1;
+                }
                 | main_fun_block main_block_element
+                {
+                        $$ = new ASTNode($1, "BLOCK", $2);
+                }
                 ;
 main_block_element : statement ';'
-            | statement { yyerror("Missing semicolon");}
+                { $$ = $1; }
+            | statement { yyerror("Missing semicolon"); $$ = $1; }
             | class_create_instance ';'
+                { $$ = nullptr; }
             | class_method_call ';'
+                { $$ = $1; }
             | fun_call ';'
+                { $$ = $1; }
             | print_statement ';'
+                { $$ = $1; }
             | if_statement
+                { $$ = $1; }
             | while_statement
+                { $$ = $1; }
             ;
 
 

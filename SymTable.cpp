@@ -1,4 +1,5 @@
 #include "SymTable.h"
+#include "AST.h"
 #include <algorithm>
 bool SymTable::addVariable(const string& varName, const string& varType,const optional<string>& value,const optional<string>& className){
     if(variables.find(varName)!=variables.end()){ //exista deja variabila declarata
@@ -12,13 +13,14 @@ bool SymTable::addVariable(const string& varName, const string& varType,const op
 }
 
 bool SymTable::addVector(const string& vecName, const string& vecType,int numberElements, const optional<vector<string>> values,const optional<string>& className){
+    vector<string> initialValues(numberElements, "0");
      if(variables.find(vecName)!=variables.end()){ //exista deja variabila declarata
         return false;
     }
     if(vectors.find(vecName)!=vectors.end()){ //exista deja vector declarat
         return false;
     }
-    vectors[vecName] = make_tuple(vecType,numberElements,values,className);
+    vectors[vecName] = make_tuple(vecType,numberElements,optional<vector<string>>(initialValues),className);
     return true;
 }
 
@@ -67,11 +69,11 @@ optional<tuple<string,optional<string>,optional<string>>> SymTable::searchVariab
 
 optional<tuple<string,int,optional<vector<string>>,optional<string>>> SymTable::searchVector(const string& vecName){
     printf("Searching for vector %s\n",vecName.c_str());
-    if(vectors.find(vecName) != vectors.end()){
+    if (vectors.count(vecName)) {
         return vectors[vecName];
     }
-    if(parentScope){
-        return parentScope->searchVector(vecName);
+    if (parentScope != nullptr) {
+        return parentScope->searchVector(vecName); 
     }
     return nullopt;
 }
@@ -139,19 +141,22 @@ if (classScope != nullptr) {
 
 
 bool SymTable::updateVarValue(const string& varName, const string& newValue){
-    if (variables.find(name) != variables.end()) {
-        get<1>(variables[name]) = newValue;
+    cout<<"UPDATEZ VARIABILA "<<varName<<" CU VALOAREA "<<newValue<<endl;
+    if (variables.find(varName) != variables.end()) {
+        get<1>(variables[varName]) = newValue;
         return true;
     }
 
     if (parentScope != nullptr) {
-        return parentScope->updateVarValue(name, newValue);
+        return parentScope->updateVarValue(varName, newValue);
     }
 
     return false;
 }
 
 bool SymTable::updateVarValueInClass(const string& className,const string& varName, const string&varType, const string& newValue,SymTable* globalScope){
+
+    cout<<"ACTUALIZEZ VARIABILA DIN CLASA EHHH"<<endl;
     SymTable* classScope = globalScope->getChildScope(className);
     
     if (classScope == nullptr) {
@@ -173,6 +178,7 @@ bool SymTable::updateVarValueInClass(const string& className,const string& varNa
 }
 
 bool SymTable::updateVectorElement(const string& vecName, int idx, const string& newValue) {
+    cout<<"ACTUALIZEZ VECTOR EHHH"<<endl;
     if (vectors.count(vecName)) {
         auto& [tip, marime, dateVector, clasa] = vectors[vecName];
         
@@ -275,6 +281,21 @@ bool SymTable::verifParamNumber(const string& funName,int nr_param){
     return false;
 }
 
+void SymTable::setFunctionBody(std::string name, ASTNode* body){
+    this->functionBodies[name] = body;
+}
+
+ASTNode* SymTable::getFunctionBody(std::string name) {
+    if (functionBodies.find(name) != functionBodies.end()) {
+        return functionBodies[name];
+    }
+    
+    if (parentScope != nullptr) {
+        return parentScope->getFunctionBody(name);
+    }
+    
+    return nullptr;
+}
 
 SymTable* SymTable::getChildScope(const string& scopeName){
     for (SymTable* s : childScopes) {

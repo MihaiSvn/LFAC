@@ -7,4 +7,4 @@ rm -f limbaj.tab.h
 
 flex limbaj.l
 bison -d limbaj.y
-g++ lex.yy.c limbaj.tab.c SymTable.cpp
+g++ -g lex.yy.c limbaj.tab.c SymTable.cpp AST.cpp

@@ -28,7 +28,7 @@ class TwoClass{
 global_var_section
     string wow;
     int pa;
-    int a;
+    int a=10;
     int b;
     bool sd;
     int tesst1,test2,test3;
@@ -36,14 +36,15 @@ global_var_section
     int vector[3]={1,2,3};
     char car;
     bool conditions[2]={true,false};
+    bool egal;
+
+    char w,q,e;
 
 global_fun_section
     bool check(int s,int p)
     {
         //Print(ITWORKSINFUNCTION);
         MyClass idk = new MyClass();
-
-    idk.a++;
     }
     int try(bool as)
     {
@@ -54,54 +55,48 @@ global_fun_section
     }
 
 main
-    a=b;
-    a=10;
-    MyClass idk = new MyClass();
-    a=-(-a+b);
-    idk.a++;
-    idk.sir[0]=10;
-    vect[3]=12+2+12;
-    sd=true&&false;
-    check(tesst1,pa);
-    //wow.method(a,b);
-    //wow.a = 2+4+wow.method(a,b)+10;
-    //function(wow.method(function(a,b),b));
+MyClass idk = new MyClass();
+idk.a=1;
+Print(idk.a);
+idk.sir[0]=100;
+Print(idk.sir[0]);
+a=10;
+Print(a);
+b=2;
+Print(b);
+a=-(-a+b);
+Print(a);
+vector[0]--;
+Print(vector[0]);
+vector[0]=123123;
+Print(vector[0]);
+idk.sir[0]--;
+Print(idk.sir[0]);
 
-    //check();
-    Print(2);
-    if(a>b){
-        //Print(YES);
-    }
+a=b;
+egal= true;
+Print(egal);
+egal=a!=b;
+Print(egal);
+a=10;
+Print(idk.sir[1]);
+while(idk.sir[1]!=0){
+    Print(a);
+    idk.sir[1]--;
+}
+Print(idk.sir[1]);
 
-    if(idk.print()==checknull(a)){
-        //Print(YAY);
-    } else if(idk.method(vect[2],true)==idk.a) {
-        Print(2);
-    }
+Print(w);
+Print(q);
+Print(e);
+w='a';
+Print(w);
+Print(q);
 
-    while(a!=b){
-        a=a+1;
-    }
+egal=!(true && false || true);
+Print(egal);
 
-    if(a==b){
-        TwoClass w = new TwoClass();
-        //w.item++;
-    } else if(a>b){
-        while(a>b){
-            a--;
-        }
-    } else {
-        a=b;
-        //a=w.getItem()++;
-    }
-
-    /*
-    sdasdawd ssigmsda 
-    */
-
-    //ssigmsda
-
-    a=b+2++;
-    Print(10);
-    Print(true);
+MyClass kdi = new MyClass();
+Print(kdi.sir[0]);
+Print(idk.sir[0]);
 end_main

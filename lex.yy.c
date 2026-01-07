@@ -911,28 +911,32 @@ YY_RULE_SETUP
 case 14:
 YY_RULE_SETUP
 #line 30 "limbaj.l"
-{std::cout<<"("<<yytext<<",COMPARE)";  return COMPARE;}
+{
+    yylval.stringVal = strdup(yytext);
+    std::cout<<"("<<yytext<<",COMPARE)";  return COMPARE;
+    
+    }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 32 "limbaj.l"
+#line 36 "limbaj.l"
 {std::cout<<"("<<yytext<<",NOT)";
 yylval.stringVal=strdup(yytext);
 return NOT;}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 35 "limbaj.l"
+#line 39 "limbaj.l"
 {std::cout<<"("<<yytext<<",INC)"; return INC;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 36 "limbaj.l"
+#line 40 "limbaj.l"
 {std::cout<<"("<<yytext<<",DEC)"; return DEC;}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 37 "limbaj.l"
+#line 41 "limbaj.l"
 { 
     yylval.stringVal = strdup(yytext); 
     return yytext[0];
@@ -940,7 +944,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 42 "limbaj.l"
+#line 46 "limbaj.l"
 { 
     yylval.stringVal = strdup(yytext); 
     return OPERATOR; 
@@ -948,7 +952,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 47 "limbaj.l"
+#line 51 "limbaj.l"
 {
     if(strcmp(yytext,"true") == 0) { yylval.boolVal = true; }
     else { yylval.boolVal = false; }
@@ -957,24 +961,24 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 53 "limbaj.l"
+#line 57 "limbaj.l"
 {return MAIN_BEGIN;}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 54 "limbaj.l"
+#line 58 "limbaj.l"
 {return MAIN_END;}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 55 "limbaj.l"
+#line 59 "limbaj.l"
 {std::cout<<"("<<yytext<<",ID)"; 
 yylval.stringVal = strdup(yytext);
 return ID;}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 61 "limbaj.l"
+#line 65 "limbaj.l"
 { 
     yylval.intVal = atoi(yytext); 
     return INT; 
@@ -982,7 +986,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 66 "limbaj.l"
+#line 70 "limbaj.l"
 { 
     yylval.floatVal = atof(yytext); 
     return FLOAT; 
@@ -990,7 +994,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 71 "limbaj.l"
+#line 75 "limbaj.l"
 {
     yylval.charVal = yytext[1]; 
     return CHAR;
@@ -999,7 +1003,7 @@ YY_RULE_SETUP
 case 27:
 /* rule 27 can match eol */
 YY_RULE_SETUP
-#line 76 "limbaj.l"
+#line 80 "limbaj.l"
 {
     yylval.stringVal = strdup(yytext); 
     return STRING;
@@ -1007,108 +1011,108 @@ YY_RULE_SETUP
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 82 "limbaj.l"
+#line 86 "limbaj.l"
 {return '{';}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 83 "limbaj.l"
+#line 87 "limbaj.l"
 {return '}';}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 84 "limbaj.l"
+#line 88 "limbaj.l"
 {return '(';}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 85 "limbaj.l"
+#line 89 "limbaj.l"
 {return ')';}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 86 "limbaj.l"
+#line 90 "limbaj.l"
 {return ';';}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 87 "limbaj.l"
+#line 91 "limbaj.l"
 {return ',';}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 88 "limbaj.l"
+#line 92 "limbaj.l"
 {return '.';}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 89 "limbaj.l"
+#line 93 "limbaj.l"
 {return '[';}
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 90 "limbaj.l"
+#line 94 "limbaj.l"
 {return ']';}
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 92 "limbaj.l"
+#line 96 "limbaj.l"
 ; // ignora spatii
 	YY_BREAK
 case 38:
 /* rule 38 can match eol */
 YY_RULE_SETUP
-#line 93 "limbaj.l"
+#line 97 "limbaj.l"
 {yylineno++;}
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 95 "limbaj.l"
+#line 99 "limbaj.l"
 {BEGIN comment; std::cout<<"("<<yytext<<",BCOMM)";}
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 96 "limbaj.l"
+#line 100 "limbaj.l"
 ;
 	YY_BREAK
 case 41:
 /* rule 41 can match eol */
 YY_RULE_SETUP
-#line 97 "limbaj.l"
+#line 101 "limbaj.l"
 {yylineno++;} // ignora chestii din comment-uri
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 98 "limbaj.l"
+#line 102 "limbaj.l"
 {BEGIN 0; std::cout<<"("<<yytext<<",ENDCOMM)";}
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 100 "limbaj.l"
+#line 104 "limbaj.l"
 {BEGIN comment_linie; std::cout<<"("<<yytext<<",BCOMM)";}
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 101 "limbaj.l"
+#line 105 "limbaj.l"
 ;
 	YY_BREAK
 case 45:
 /* rule 45 can match eol */
 YY_RULE_SETUP
-#line 102 "limbaj.l"
+#line 106 "limbaj.l"
 {yylineno++; BEGIN 0; std::cout<<"("<<"newline,ENDCOMM)";}
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 104 "limbaj.l"
+#line 108 "limbaj.l"
 {std::cout<<"("<<yytext<<",NECUNOSCUT)";}
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 107 "limbaj.l"
+#line 111 "limbaj.l"
 ECHO;
 	YY_BREAK
-#line 1112 "lex.yy.c"
+#line 1116 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(comment):
 case YY_STATE_EOF(comment_linie):
@@ -2115,4 +2119,4 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 107 "limbaj.l"
+#line 111 "limbaj.l"
