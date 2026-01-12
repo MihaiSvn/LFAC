@@ -11,10 +11,13 @@ class MyClass
     class_methods_section
         int method(int c,bool ds){
             bool terog;
-            return c;
+            bool penis;
+            c=12;
+            ds=false;
+            return 14;
         }
         bool print(){
-            //Print(12);
+            Print(12);
         }
 
 }
@@ -41,14 +44,20 @@ global_var_section
 
     char w,q,e;
 
-    bool egal_check;
+    bool egal_check=false;
 
 global_fun_section
     bool check(int s,int p)
     {
         //Print(ITWORKSINFUNCTION);
         MyClass idk = new MyClass();
-        return s==p;
+        if(s==p){
+            Print("sunt egale");
+            return true;
+        } else {
+            Print("Nu sunt egale");
+            return false;
+        }
     }
     int try(bool as)
     {
@@ -60,57 +69,14 @@ global_fun_section
     bool checknull(int a){
 
     }
+    int inc(int a){
+        int A=a+1;
+        return A;
+    }
 
 main
-MyClass idk = new MyClass();
-idk.a=1;
-Print(idk.a);
-idk.sir[0]=100;
-Print(idk.sir[0]);
-a=10;
-Print(a);
-b=2;
-Print(b);
-a=-(-a+b);
-Print(a);
-vector[0]--;
-Print(vector[0]);
-vector[0]=123123;
-Print(vector[0]);
-idk.sir[0]--;
-Print(idk.sir[0]);
 
-a=b;
-egal= true;
-Print(egal);
-egal=a!=b;
-Print(egal);
-a=10;
-Print(idk.sir[1]);
-while(idk.sir[1]!=0){
-    Print(a);
-    idk.sir[1]--;
-}
-Print(idk.sir[1]);
-
-Print(w);
-Print(q);
-Print(e);
-w='a';
-Print(w);
-Print(q);
-
-egal=!(true && false || true);
-Print(egal);
-
-MyClass kdi = new MyClass();
-Print(kdi.sir[0]);
-Print(idk.sir[0]);
-
-//egal_check=check(1,1);
-Print(check(1,2));
-
-//a=idk.method(2,true);
-//Print(a)
-
+//Print(a);
+a=0;
+Print(inc(inc(a)));
 end_main

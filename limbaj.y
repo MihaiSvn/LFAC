@@ -162,6 +162,19 @@ class_create_instance : ID ID ASSIGN NEW ID '('')'
                                                 }
                                                 
                                         }
+                                        for (auto const& [funName, info] : classTemplate->functions) {
+                                                string memberFunName = string($2) + "." + funName;
+                                                string returnType = get<0>(info);
+                                                optional<vector<string>> params = get<1>(info);
+                                                optional<string> className = get<2>(info);
+                                                
+                                                currentScope->addFunction(memberFunName, returnType, params, className);
+                                                
+                                                ASTNode* body = classTemplate->getFunctionBody(funName);
+                                                currentScope->setFunctionBody(memberFunName, body);
+                                                
+                                                cout << "DEBUG: Linked method " << memberFunName << " to object " << string($2) << endl;
+                                        }
                                         cout << "DEBUG: Instantiated object " << string($2) << " of class " << string($1) << endl;
 
                                 }
@@ -307,30 +320,31 @@ class_method_call : ID '.' ID  //vezi sa pui ID.fun_call si intri intr-un scope 
                         if(aux==nullptr){
                                 yyerror("didn't find child scope succesfuly");
                         }
+
+                        //string fun_name=string($1)+"."+string($3);
+                        //calling_functions.push(fun_name.c_str());
                         calling_functions.push($3);
                         param_counts.push(0);
                   }
                   '(' method_call_params ')'
                   {
                         string current_fun = calling_functions.top();
+                        string fullName = string($1) + "." + string($3);
                         int total_params = param_counts.top();
-
+                        cout<<"NR PARAMETRII CURENTI "<<total_params<<endl;
                         if(aux->verifParamNumber(current_fun, total_params) == false){
                                 string msg="The method "+current_fun+" doesn't have the correct number of parameters";
                                 yyerror(msg.c_str());
                         }
 
-                       auto fun = aux->searchFunction($3);
+                       auto fun = aux->searchFunction(current_fun);
                         if(fun==nullopt){
                                 yyerror("error at finding method");
                         }
                         auto [tip,parametrii,clasa] = fun.value();
-                        ASTNode* obj = new ASTNode("id", $1, clasa.value());
-                        ASTNode* method = new ASTNode("id", $3, tip);
-                        ASTNode* accessNode = new ASTNode(obj, ".", method);
-                        ASTNode* tempCall = new ASTNode(accessNode, "METHOD_CALL", $6);
         
-                        // $$ = tempCall->evaluate(currentScope);
+                        ASTNode* nameNode = new ASTNode("id", (char*)fullName.c_str(), tip);
+                        $$ = new ASTNode(nameNode, "CALL", $6);
 
                         calling_functions.pop();
                         param_counts.pop();
@@ -345,28 +359,25 @@ method_call_params : {$$=nullptr;}
                 string c_fun = calling_functions.top();
                 int c_idx = param_counts.top();
                 
-                ASTNode* evaluatedExpr = $1->evaluate(currentScope);
-
-                if(aux->verifParamType(c_fun, c_idx, evaluatedExpr->exprType) == false){
+                if(aux->verifParamType(c_fun, c_idx, $1->exprType) == false){
                     string msg = "Parameter " + to_string(c_idx) + " in " + c_fun + " is of type " + $1->exprType + " but should be different.";
                     yyerror(msg.c_str());
                 }
                 param_counts.top()++;
-                $$ = new ASTNode(evaluatedExpr, "ARG", nullptr);
+                $$ = new ASTNode($1, "ARG", nullptr);
             }
             | expression ',' 
             {
                 string c_fun = calling_functions.top();
                 int c_idx = param_counts.top();
                 
-                ASTNode* evaluatedExpr = $1->evaluate(currentScope);
                 
-                if(aux->verifParamType(c_fun, c_idx, evaluatedExpr->exprType) == false){
+                if(aux->verifParamType(c_fun, c_idx, $1->exprType) == false){
                 yyerror("Type mismatch in method call parameters");
                 }
                 
                 param_counts.top()++;
-                $<node>$ = evaluatedExpr; 
+                $<node>$ = $1; 
              }
              method_call_params
              {
@@ -945,7 +956,7 @@ block_element : statement ';'
                 { $$ = $1; }
             | statement { yyerror("Missing semicolon"); $$ = $1; }
             | var_decl ';'
-                { $$ = nullptr; }
+                { $$ = $1; }
             | var_decl { yyerror("Missing semicolon"); $$ = nullptr; }
             | class_create_instance ';'
                 { $$ = nullptr; }
@@ -970,7 +981,8 @@ return_statement: RETURN expression ';'
                                 string msg="Return type of function "+string(funName)+" must be of type ["+string(funType)+"], received type ["+$2->exprType+"] instead.";
                                 yyerror(msg.c_str());
                         }
-                        $$=$2;
+                        $$ = new ASTNode($2, "RETURN", nullptr);
+                        $$->exprType = $2->exprType;
 
                 }
 //apelare functie

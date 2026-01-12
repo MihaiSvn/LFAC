@@ -39,7 +39,7 @@ public:
 
     void Print();
     void printAST(int level);
-    
+    int compareNodes(ASTNode* L, ASTNode* R);
 
     ASTNode* left;
     ASTNode* right;
