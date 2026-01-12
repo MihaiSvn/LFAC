@@ -163,6 +163,12 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
             cout << "[Output]: " << rezultat->getStringValue() << endl;
             return rezultat;
         }
+        else if (label=="RETURN"){
+            ASTNode* val = left->evaluate(currentScope);
+            ASTNode* signal = new ASTNode(val->get_type(),val->getStringValue(),val->exprType);
+            signal->label="RETURN_SIGNAL";
+            return signal;
+        }
         
     }
 
@@ -177,13 +183,27 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
             ASTNode* cond = left->evaluate(currentScope);
             cout << "DEBUG: Conditie IF evaluata ca: " << (cond->value.bVal ? "TRUE" : "FALSE") << endl;
 
-            if (cond->value.bVal == true && cond->type == astBOOL) {
-                cout << "DEBUG: Intru pe ramura TRUE" << endl;
-                if (right->label == "IF_ELSE_LINK") {
-                    if (right->left) return right->left->evaluate(currentScope);
-                } else {
-                    return right->evaluate(currentScope);
+            if (cond->type == astBOOL) {
+                if(cond->value.bVal == true){
+                    cout << "DEBUG: Intru pe ramura TRUE" << endl;
+                    if (right->label == "IF_ELSE_LINK") {
+                        ASTNode* res = right->left->evaluate(currentScope);
+                        if (res != nullptr && res->label == "RETURN_SIGNAL") return res;
+                    } else {
+                        ASTNode* res = right->evaluate(currentScope);
+                        if (res != nullptr && res->label == "RETURN_SIGNAL") return res;
+                    }
                 }
+                else {
+                    //else
+                    if (right && right->label == "IF_ELSE_LINK") {
+                        if (right->right) {
+                            ASTNode* res = right->right->evaluate(currentScope);
+                            if (res != nullptr && res->label == "RETURN_SIGNAL") return res;
+                        }
+                    }
+                }
+                
             } else {
                 cout << "DEBUG: Intru pe ramura FALSE (ELSE)" << endl;
                 if (right && right->label == "IF_ELSE_LINK") {
@@ -199,7 +219,10 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                 ASTNode* cond = left->evaluate(currentScope); 
 
                 if (cond->type == astBOOL && cond->value.bVal == true) {
-                    right->evaluate(currentScope);
+                    ASTNode* res=right->evaluate(currentScope);
+                    if (res != nullptr && res->label == "RETURN_SIGNAL") {
+                        return res;
+                    }
                 } else {
                     break;
                 }
@@ -229,6 +252,44 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                 }
             }
             return nullptr;
+        }
+
+        else if (label=="CALL"){
+            string fun_id = left->label;
+            vector<string> names = currentScope->getParamNames(fun_id);
+            ASTNode* body = currentScope->getFunctionBody(fun_id);
+            if (!body) {
+                return new ASTNode("error", "Function body not found", "error");
+            }
+
+            SymTable* funcExecScope = new SymTable(fun_id + "_exec", currentScope);
+
+            ASTNode* pointer= this->right;
+            //structura parametrii e nod entral ARG, nod stanga expresie, nod dreapta alt ARG, si asa mai departe
+            for(int i=0;i<names.size();i++){
+                if(pointer==nullptr)
+                    break;
+                ASTNode* evalArg=pointer->left->evaluate(currentScope);
+                
+                funcExecScope->addVariable(names[i], evalArg->exprType);
+                funcExecScope->updateVarValue(names[i], evalArg->getStringValue());
+
+                auto [tip,valoare,clasa]=funcExecScope->variables[names[i]];
+
+                cout<<"variaible din functie "<<names[i]<<" a primit valaorea "<<valoare.value()<<endl;
+
+                pointer = pointer->right;
+            }
+            cout<<"EXECUTING FUNCTION "<<fun_id<<endl;
+
+            
+            ASTNode* rez=body->evaluate(funcExecScope);
+
+            if (rez != nullptr && rez->label == "RETURN_SIGNAL") {
+                rez->label = rez->get_type(); 
+                return rez;
+            }
+            return rez;
         }
 
 
@@ -527,15 +588,22 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
     
     //IN STANGA BLOCK, IN DREAPTA ALTA INSTR
     else if (label == "BLOCK") {
+        ASTNode* result = nullptr;
         if (this->left != nullptr) {
             cout<<"EVALUAM STANGA "<<left->label<<endl;
-            this->left->evaluate(currentScope);
+            result=this->left->evaluate(currentScope);
+            if(result!=nullptr && result->label=="RETURN_SIGNAL"){
+                return result;
+            }
         }
         
         if (this->right != nullptr) {
             cout<<"EVALUAM DREAPTA "<<right->label<<endl;
 
-            this->right->evaluate(currentScope);
+            result=this->right->evaluate(currentScope);
+            if(result!=nullptr && result->label=="RETURN_SIGNAL"){
+                return result;
+            }
         }
 
         return nullptr;

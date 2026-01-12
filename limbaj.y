@@ -30,6 +30,7 @@ stack<int> param_counts;
 stack<string> calling_functions;
 
 char* funName;
+char* funType;
 
 char* currentVarName;
 char* currentVarType;
@@ -52,12 +53,12 @@ string current_init_vec_name;
         class ASTNode* node;
         vector<string>* idList;
 }
-%token <stringVal>TYPE CLASS_SECTION CLASS_VAR_SECTION CLASS_METHODS_SECTION CLASS GVAR_SECTION GFUN_SECTION NEW ASSIGN IF ELSE WHILE COMPARE <stringVal>ID <intVal>INT <boolVal>BOOL <floatVal>FLOAT <stringVal>STRING <charVal>CHAR PRINT MAIN_BEGIN MAIN_END <stringVal>OPERATOR INC DEC NOT
+%token <stringVal>TYPE CLASS_SECTION CLASS_VAR_SECTION CLASS_METHODS_SECTION CLASS GVAR_SECTION GFUN_SECTION NEW ASSIGN IF ELSE WHILE COMPARE <stringVal>ID <intVal>INT <boolVal>BOOL <floatVal>FLOAT <stringVal>STRING <charVal>CHAR PRINT MAIN_BEGIN MAIN_END <stringVal>OPERATOR INC DEC NOT RETURN
 
 
 %type <node> expression expression_elem statement if_statement while_statement factor term exp
 %type <node> fun_call class_method_call class_access print_statement fun_call_params fun_decl method_call_params class_var_call print_expr class_create_instance
-%type <node> main_fun_block main_block_element fun_block block_element main var_decl vector_element vector_elements
+%type <node> main_fun_block main_block_element fun_block block_element main var_decl vector_element vector_elements return_statement
 %type <idList> var_list
 
 %start program
@@ -899,6 +900,7 @@ fun_decl : TYPE ID '('
                 }
 
                 funName = $2;
+                funType = $1;
                 parentScope = currentScope;
                 currentScope = currentScope->enterScope($2);
         } fun_decl_params ')' '{' fun_block 
@@ -957,9 +959,20 @@ block_element : statement ';'
                 { $$ = $1; }
             | while_statement
                 { $$ = $1; }
+            | return_statement
+                { $$=$1; }
             ;
 
+return_statement: RETURN expression ';'
+                {
+                        cout<<string(funType)<<' '<<$2->exprType<<endl;
+                        if(string(funType)!=$2->exprType){
+                                string msg="Return type of function "+string(funName)+" must be of type ["+string(funType)+"], received type ["+$2->exprType+"] instead.";
+                                yyerror(msg.c_str());
+                        }
+                        $$=$2;
 
+                }
 //apelare functie
 fun_call : ID 
         {
@@ -972,8 +985,7 @@ fun_call : ID
                 }
 
         }
-        '(' fun_call_params 
-        ')'
+        '(' fun_call_params ')'
         {
                 string current_fun = calling_functions.top();
                 int total_params = param_counts.top();
@@ -985,13 +997,10 @@ fun_call : ID
 
                 auto fun=currentScope->searchFunction(current_fun);
                 auto [tip,params,clasa]=fun.value();
-
+                // CE FAC CAND VAD CALL IN AST
                 ASTNode* nameNode = new ASTNode("id", (char*)current_fun.c_str(), tip);
-                ASTNode* tempCall = new ASTNode(nameNode, "CALL", $4);
-                ASTNode* result = tempCall->evaluate(globalScope);
-                
-                $$ = result;
-
+                $$ = new ASTNode(nameNode, "CALL", $4);
+        
                 calling_functions.pop();
                 param_counts.pop();
         }
@@ -1474,6 +1483,8 @@ main_block_element : statement ';'
             | if_statement
                 { $$ = $1; }
             | while_statement
+                { $$ = $1; }
+            | return_statement
                 { $$ = $1; }
             ;
 
