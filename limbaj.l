@@ -26,7 +26,8 @@ yylval.stringVal = strdup(yytext);
 "if" {std::cout<<"("<<yytext<<",IF)";  return IF;}
 "else" {std::cout<<"("<<yytext<<",ELSE)";  return ELSE;}
 "while" {std::cout<<"("<<yytext<<",WHILE)";  return WHILE;}
-
+"for" {std::cout<<"("<<yytext<<",FOR)";  return FOR;}
+"do" {std::cout<<"("<<yytext<<",DO)";  return DO;}
 "return" {std::cout<<"RETURN"; return RETURN;}
 
 

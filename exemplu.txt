@@ -78,8 +78,12 @@ main
 
 //Print(a);
 a=0;
-Print(inc(inc(a)));
-if(a+b){
+//Print(inc(inc(a)));
+
+MyClass idk= new MyClass();
+
+do{
     Print(a);
-}
+    a++;
+} while(a<10);
 end_main

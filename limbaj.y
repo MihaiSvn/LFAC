@@ -53,10 +53,10 @@ string current_init_vec_name;
         class ASTNode* node;
         vector<string>* idList;
 }
-%token <stringVal>TYPE CLASS_SECTION CLASS_VAR_SECTION CLASS_METHODS_SECTION CLASS GVAR_SECTION GFUN_SECTION NEW ASSIGN IF ELSE WHILE COMPARE <stringVal>ID <intVal>INT <boolVal>BOOL <floatVal>FLOAT <stringVal>STRING <charVal>CHAR PRINT MAIN_BEGIN MAIN_END <stringVal>OPERATOR INC DEC NOT RETURN
+%token <stringVal>TYPE CLASS_SECTION CLASS_VAR_SECTION CLASS_METHODS_SECTION CLASS GVAR_SECTION GFUN_SECTION NEW ASSIGN IF ELSE WHILE FOR DO COMPARE <stringVal>ID <intVal>INT <boolVal>BOOL <floatVal>FLOAT <stringVal>STRING <charVal>CHAR PRINT MAIN_BEGIN MAIN_END <stringVal>OPERATOR INC DEC NOT RETURN
 
 
-%type <node> expression expression_elem statement if_statement while_statement factor term exp
+%type <node> expression expression_elem statement if_statement while_statement factor term exp for_assign for_statement do_while_statement
 %type <node> fun_call class_method_call class_access print_statement fun_call_params fun_decl method_call_params class_var_call print_expr class_create_instance
 %type <node> main_fun_block main_block_element fun_block block_element main var_decl vector_element vector_elements return_statement
 %type <idList> var_list
@@ -970,6 +970,10 @@ block_element : statement ';'
                 { $$ = $1; }
             | while_statement
                 { $$ = $1; }
+            | do_while_statement
+                { $$=$1; }
+            | for_statement
+                { $$=$1; }
             | return_statement
                 { $$=$1; }
             ;
@@ -1476,6 +1480,32 @@ while_statement : WHILE '(' expression ')' '{' main_fun_block '}'
              }
             ;
 
+for_statement: FOR '(' for_assign ';' expression ';' statement ')' '{' main_fun_block '}'
+        {
+                if($5->exprType!="bool"){
+                        string msg="For condition must be of type [bool], it's of type ["+string($5->exprType)+"] instead";
+                        yyerror(msg.c_str());
+                }
+
+                ASTNode* stepBody = new ASTNode($7, "FOR_STEP_BODY", $10);
+                ASTNode* condBody = new ASTNode($5,"FOR_COND",stepBody);
+                $$ = new ASTNode($3,"FOR",condBody);
+        }
+         ;
+
+for_assign: statement { $$=$1;}
+          | var_decl { $$=$1; }
+          ;
+
+do_while_statement: DO '{' main_fun_block '}' WHILE '(' expression ')' ';'
+        {
+                if($7->exprType!="bool"){
+                        string msg="Do...while condition must be of type [bool], it's of type ["+string($7->exprType)+"] instead";
+                        yyerror(msg.c_str());
+                }
+                $$ = new ASTNode($3,"DO-WHILE",$7);
+        }
+        ;
 //    ################# MAIN ###########################
 
 
@@ -1511,6 +1541,10 @@ main_block_element : statement ';'
             | if_statement
                 { $$ = $1; }
             | while_statement
+                { $$ = $1; }
+            | do_while_statement
+                { $$=$1; }
+            | for_statement
                 { $$ = $1; }
             | return_statement
                 { $$ = $1; }

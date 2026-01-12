@@ -237,8 +237,34 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
             return nullptr;
         }
 
+        //stanga blockul de instructiuni, dreapta conditia
+         else if(label=="DO-WHILE"){
+            printAST(0);
+            while(true){
+                if(left){
+                    ASTNode* res=left->evaluate(currentScope);
+                    if (res != nullptr && res->label == "RETURN_SIGNAL") {
+                        return res;
+                    }
+                }
+
+                ASTNode* cond = right->evaluate(currentScope);
+                if(cond->type==astBOOL && cond->value.bVal==true){ 
+                    //continue
+                }
+                else {
+                    break;
+                }
+
+            }
+            return nullptr;
+            
+        }
+
         //IN STANGA CONDITIA DE INITIALIZARE, IN DREAPTA UN ALT NOD CARE IN STANGA ARE CONDITIA, IAR IN DREAPTA UN ALT NOD CARE IN STANGA ARE PASUL, IAR IN DREAPTA CORPUL LUI FOR
     else if (label == "FOR") {
+
+        printAST(0);
         if (left) left->evaluate(currentScope);
 
         ASTNode* forRest = right;
@@ -260,6 +286,8 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
         }
         return nullptr;
     }
+
+   
     if(left==nullptr && right==nullptr){  //frunza, avem fie id, fie o valoarea
         
         if(this->type==astID){
