@@ -79,4 +79,7 @@ main
 //Print(a);
 a=0;
 Print(inc(inc(a)));
+if(a+b){
+    Print(a);
+}
 end_main

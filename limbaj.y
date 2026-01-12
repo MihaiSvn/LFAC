@@ -1440,15 +1440,27 @@ expression : exp COMPARE exp
 
 if_statement : IF '(' expression ')' '{' main_fun_block '}'
             {
+                if($3->exprType!="bool"){
+                        string msg="The condition in the if statement isn't of type [bool], but of type ["+$3->exprType+"] instead";
+                        yyerror(msg.c_str());
+                }
                 $$ = new ASTNode($3, "IF", $6);
             }
             | IF '(' expression ')' '{' main_fun_block '}' ELSE '{' main_fun_block '}'
             {
+                if($3->exprType!="bool"){
+                        string msg="The condition in the if statement isn't of type [bool], but of type ["+$3->exprType+"] instead";
+                        yyerror(msg.c_str());
+                }
                 ASTNode* bodyNode = new ASTNode($6, "IF_ELSE_LINK", $10);
                 $$ = new ASTNode($3, "IF", bodyNode);
             }
             | IF '(' expression ')' '{' main_fun_block '}' ELSE if_statement
             {
+                if($3->exprType!="bool"){
+                        string msg="The condition in the if statement isn't of type [bool], but of type ["+$3->exprType+"] instead";
+                        yyerror(msg.c_str());
+                }
                 ASTNode* bodyNode = new ASTNode($6, "IF_ELSE_LINK", $9);
                 $$ = new ASTNode($3, "IF", bodyNode);
             }
@@ -1456,6 +1468,10 @@ if_statement : IF '(' expression ')' '{' main_fun_block '}'
 
 while_statement : WHILE '(' expression ')' '{' main_fun_block '}'
              {
+                if($3->exprType!="bool"){
+                        string msg="The condition in the if statement isn't of type [bool], but of type ["+$3->exprType+"] instead";
+                        yyerror(msg.c_str());
+                }
                 $$ = new ASTNode($3, "WHILE", $6);
              }
             ;
