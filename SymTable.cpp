@@ -324,69 +324,35 @@ SymTable* SymTable::exitScope(){
     return this->parentScope;
 }
 
-#include <iomanip>
-
 void SymTable::printTableToFile(std::ofstream& fout) {
-    string space=" ";
+    string tab = " ";
     
-    fout << space << "========================================\n";
-    fout << space << "SCOPE: " << this->name << "\n";
-    fout << space << "========================================\n";
+    fout << tab << "--- SCOPE: " << name << " ---\n";
 
     // variabile
-    fout << space << "[Variables]\n";
-    if (variables.empty()) fout << space << "  (none)\n";
-    for (auto const& [name, info] : variables) {
-        auto [type, value, className] = info;
-        fout << space << "  - " << name 
-             << " | Type: " << std::setw(10) << type 
-             << " | Value: " << (value.has_value() ? value.value() : "null") << "\n";
+    for (auto const& [nume, info] : variables) {
+        fout << tab << "  VAR: " << get<0>(info) << " " << nume << " = " 
+          << (get<1>(info).has_value() ? get<1>(info).value() : "?") << "\n";
     }
 
     // vectori
-    fout << space << "\n" << space << "[Vectors]\n";
-    if (vectors.empty()) fout << space << "  (none)\n";
-    for (auto const& [name, info] : vectors) {
-        auto [type, size, values, className] = info;
-        fout << space << "  - " << std::left << std::setw(15) << name 
-             << " | Type: " << std::setw(10) << type 
-             << " | Size: " << size << " | Elements: [";
-        if (values.has_value()) {
-            for (size_t i = 0; i < values.value().size(); ++i) {
-                fout << values.value()[i] << (i == values.value().size() - 1 ? "" : ", ");
-            }
+    for (auto const& [nume, info] : vectors) {
+        fout << tab << "  VEC: " << get<0>(info) << " " << nume << "[" << get<1>(info) << "] = { ";
+        if (get<2>(info).has_value()) {
+            for (auto const& val : get<2>(info).value()) fout << val << " ";
         }
-        fout << "]\n";
+        fout << "}\n";
     }
 
-    // functii
-    fout << space << "\n" << space << "[Functions/Methods]\n";
-    if (functions.empty()) fout << space << "  (none)\n";
-    for (auto const& [name, info] : functions) {
-        auto [type, params, className] = info;
-        fout << space << "  - " << std::left << std::setw(15) << name 
-             << " | Returns: " << std::setw(10) << type;
-        if (className.has_value()) fout << " | Member of: " << className.value();
-        fout << "\n";
+    // functii/metode
+    for (auto const& [nume, info] : functions) {
+        fout << tab << "  FUN: " << get<0>(info) << " " << nume << "\n";
     }
 
     fout << "\n";
 
-    // mers in copii
-    for (SymTable* child : childScopes) {
-        if (child != nullptr) {
-            child->printTableToFile(fout);
-        }
+    // recursiv
+    for (auto child : childScopes) {
+        if (child) child->printTableToFile(fout);
     }
-}
-
-void SymTable::generateTableFile(SymTable* globalScope, const std::string& filename) {
-    std::ofstream fout(filename);
-    if (!fout.is_open()) {
-        std::cerr << "Nu s-a putut deschide fisierul pentru tabelele de simboluri!\n";
-        return;
-    }
-    globalScope->printTableToFile(fout);
-    fout.close();
-    std::cout << "Tabelele de simboluri au fost salvate in " << filename << std::endl;
 }

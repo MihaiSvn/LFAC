@@ -164,18 +164,19 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                 return new ASTNode("error", "Function body not found", "error");
             }
 
-            SymTable* funcExecScope = new SymTable(fun_id + "_exec", globalScope);
+            SymTable* classTemplate = globalScope;
+            string instanceName="";
             int pozitie = fun_id.find('.');
             if(pozitie!=string::npos){
-                currentScope->instanceOwner=fun_id.substr(0,pozitie);
                 //cout<<"INSTANTA  "<<currentScope->instanceOwner<<endl;
-                string CLASS=globalScope->instances[currentScope->instanceOwner];
-                funcExecScope=currentScope->getChildScope(CLASS);
-                funcExecScope->instanceOwner=currentScope->instanceOwner;
+                instanceName = fun_id.substr(0, pozitie);
+                string className = globalScope->instances[instanceName];
+                classTemplate = globalScope->getChildScope(className);
             }
 
                 //cout<<"SCOPE UL MEU ESTE "<<funcExecScope->name<<endl;
-
+            SymTable* funcExecScope = new SymTable(fun_id + "_exec", classTemplate);
+            funcExecScope->instanceOwner = instanceName;
            
 
             ASTNode* pointer= this->right;

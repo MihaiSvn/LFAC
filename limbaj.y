@@ -79,7 +79,11 @@ if(errorCount == 0 && $4 != nullptr) {
         cout << "--- Start Execution ---" << endl;
         $4->evaluate(globalScope);
         cout << "--- Execution Finished Successfully ---" << endl;
-        SymTable::generateTableFile(globalScope,"tables.txt");
+        std::ofstream fout("tables.txt");
+        if (fout.is_open()) {
+           globalScope->printTableToFile(fout);
+           fout.close();
+        }
 
     }
 

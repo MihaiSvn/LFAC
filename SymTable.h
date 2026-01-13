@@ -67,7 +67,5 @@ class SymTable{
     SymTable* enterScope(const string& newScopeName);
     SymTable* exitScope();
 
-    void printTableToFile(std::ofstream& fout);
-    static void generateTableFile(SymTable* globalScope, const std::string& filename);
-    
+    void printTableToFile(std::ofstream& fout);    
 };

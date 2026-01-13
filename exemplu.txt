@@ -90,7 +90,6 @@ global_fun_section
     int inc(int a){
         auto A=a+1;
         if(A<10){
-            Print(A);
             inc(A);
         }
         return A;
@@ -126,34 +125,26 @@ global_fun_section
     
     int cautareBinar(int st, int dr, int x) {
         int mijloc;
-        Print("STANGA");
-        Print(st);
-        Print("DREAPTA");
-        Print(dr);
-        Print("VECTORRRRR");
-        Print(v[4]);
         if (dr >= st) {
             mijloc = st + (dr - st) / 2;
-            Print("MIJLOC ESTE");
-            Print(mijloc);
+        
 
-            // Daca elementul este la mijloc
-            Print("V MIJLOC");
-            Print(v[mijloc]);
+            // elem e la mijl
+
             if (v[mijloc] == x) {
                 return mijloc;
             }
 
-            // Daca elementul e mai mic decat mijlocul, cautam in stanga
+            // < mijloc, cautam stanga
             if (v[mijloc] > x) {
                 return cautareBinar(st, mijloc - 1, x);
             }
 
-            // Altfel, cautam in dreapta
+            // cautam dr
             return cautareBinar(mijloc + 1, dr, x);
         }
 
-        // Elementul nu exista
+        // nu exista
         return -1;
     }
 
@@ -184,7 +175,6 @@ global_fun_section
         
         for (i = 0; i < lungime - 1; i++) {
             for (j = 0; j < lungime - i - 1; j++) {
-                // Dacă elementul curent e mai mare decât următorul, le inversăm
                 if (sir[j] > sir[j + 1]) {
                     temp = sir[j];
                     sir[j] = sir[j + 1];
@@ -205,7 +195,6 @@ global_fun_section
 
 
 main
-/*
 
  x = 48;
      y = 18;
@@ -213,20 +202,32 @@ main
     
     Print("CMMDC pentru 48 si 18 este:");
     Print(rezultat);
-*/
+    Print(newline);
 
     n=5;
     rez=factorial(n);
 
     Print("Factorial de 5 este:");
     Print(rez);
+    Print(newline);
 
+    Print("Vectorul inainte de sortare:");
+    Print("Vector inainte de sortare:");
+    printVector(n);
+    Print(newline);
+    
+    bubbleSort(n);
 
-/*
+    Print("Vectorul dupa sortare:");
+    printVector(n);
+    Print(newline);
 
-Print(verifica_0(0));
-cautat=23;
-    index = cautareBinar(0, 9, 23);
+    cautat=23;
+    Print("Cuatam binar elementul");
+    Print(cautat);
+    Print("...");
+    Print(newline);
+    index = cautareBinar(0, 9, cautat);
     
     if (index != -1) {
         Print("Elementul a fost gasit la indexul:");
@@ -235,18 +236,12 @@ cautat=23;
         Print("Elementul nu exista in vector.");
     }
 
-
-Print("Vectorul inainte de sortare:");
-    Print("VEC INITIAL WHOOOO");
-    printVector(n);
-
-    bubbleSort(n);
-
-    Print("Vectorul dupa sortare:");
-    printVector(n);
+    Print(newline);
 
 
 
+
+/*
 //egal=verifEgal(1,1,1);
 MyClass idk = new MyClass();
 Print(idk.a);

@@ -1,0 +1,33 @@
+class_section
+
+class Shop
+{
+    class_var_section
+        int preturi[3];
+        int stoc[3];
+    class_methods_section
+        int setup(int p1, int p2, int p3, int s1, int s2, int s3) {
+            preturi[0] = p1; preturi[1] = p2; preturi[2] = p3;
+            stoc[0] = s1; stoc[1] = s2; stoc[2] = s3;
+            return 1;
+        }
+
+        int calculeazaValoareTotala() {
+            int i;
+            auto total = 0;
+            for (i = 0; i < 3; i++) {
+                total = total + (preturi[i] * stoc[i]);
+            }
+            return total;
+        }
+}
+global_var_section
+int val;
+main
+    Shop magazin = new Shop();
+    magazin.setup(2, 5, 7, 10, 2, 3);
+    
+    val = magazin.calculeazaValoareTotala();
+    Print("Valoarea totala a marfii din magazin este:");
+    Print(val); // 2*10 + 5*2 + 7*3 = 20 + 10 + 21 = 51
+end_main
