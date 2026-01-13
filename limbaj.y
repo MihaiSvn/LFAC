@@ -142,7 +142,17 @@ class_create_instance : ID ID ASSIGN NEW ID '('')'
                                         for (auto const& [varName, info] : classTemplate->variables) {
                                         string memberName = string($2) + "." + varName;
                                         string type = get<0>(info);
-                                        string defaultValue = get<1>(info).value_or("0");
+                                        string defaultValue;
+                                        if (get<1>(info).has_value()) {
+                                                defaultValue = get<1>(info).value();
+                                        } else {
+                                                if (type == "int") defaultValue = "0";
+                                                else if (type == "float") defaultValue = "0.0";
+                                                else if (type == "bool") defaultValue = "false";
+                                                else if (type == "char") defaultValue = " ";
+                                                else if (type == "string") defaultValue = "";
+                                                else defaultValue = "0"; 
+                                        }
                                         
                                         currentScope->addVariable(memberName, type);
                                         currentScope->updateVarValue(memberName, defaultValue);
@@ -152,15 +162,33 @@ class_create_instance : ID ID ASSIGN NEW ID '('')'
                                                 string memberName = string($2) + "." + vecName;
                                                 string type = get<0>(info);
                                                 int size = get<1>(info);
+                                                auto const& initialValuesOpt = get<2>(info);
+                                                string defaultValue;
+                                                if (type == "int") defaultValue = "0";
+                                                else if (type == "float") defaultValue = "0.0";
+                                                else if (type == "bool") defaultValue = "false";
+                                                else if (type == "string") defaultValue = "";
+                                                else if (type == "char") defaultValue = " ";
+                                                else defaultValue = "0"; 
+                                        
                                                 
                                                 currentScope->addVector(memberName, type, size);
                                                 cout<<"ADDED VARIABLE "<<memberName<<" WITH VALUE "<< "0" <<endl;
 
                                                 
                                                 for (int i = 0; i < size; i++) {
-                                                        currentScope->updateVectorElement(memberName, i, "0");
+                                                        string valueToSet = defaultValue;
+
+                                                        if (initialValuesOpt.has_value()) {
+                                                        const vector<string>& vals = initialValuesOpt.value();
+                                                        if (i < vals.size()) {
+                                                                valueToSet = vals[i];
+                                                        }
+                                                        }
+                                                        
+                                                        currentScope->updateVectorElement(memberName, i, valueToSet);
                                                 }
-                                                
+                                                                                
                                         }
                                         for (auto const& [funName, info] : classTemplate->functions) {
                                                 string memberFunName = string($2) + "." + funName;
@@ -171,13 +199,24 @@ class_create_instance : ID ID ASSIGN NEW ID '('')'
                                                 currentScope->addFunction(memberFunName, returnType, params, className);
                                                 
                                                 ASTNode* body = classTemplate->getFunctionBody(funName);
+                                                if(body==nullptr){
+                                                        cout<<"NU AM FUNCTION BODYY"<<endl;
+                                                }
                                                 currentScope->setFunctionBody(memberFunName, body);
+                                                cout<<"SUNT AICIIIIIII RAWWWW "<<endl;
+                                                auto parm=classTemplate->getParamNames(funName);
+                                                for(int i=0;i<parm.size();i++){
+                                                        cout<<"PARAMETRUL E ADAUGAT LA FUNCTIA "<<memberFunName<<" "<<parm[i]<<endl;
+                                                        currentScope->addParamName(memberFunName,parm[i]);
+                                                }
                                                 
                                                 cout << "DEBUG: Linked method " << memberFunName << " to object " << string($2) << endl;
                                         }
                                         cout << "DEBUG: Instantiated object " << string($2) << " of class " << string($1) << endl;
 
                                 }
+
+                                currentScope->instances[string($2)]=string($1);
                                 
                                 ASTNode* objNode = new ASTNode("id", $2, $1);
                                 ASTNode* classTypeNode = new ASTNode("id", $1, "CLASS_TYPE");
@@ -368,6 +407,7 @@ method_call_params : {$$=nullptr;}
                     yyerror(msg.c_str());
                 }
                 param_counts.top()++;
+                cout<<"EXPRESIA MEAA DIN ARGGG "<<$1->getStringValue()<<" "<<$1->exprType<<endl; 
                 $$ = new ASTNode($1, "ARG", nullptr);
             }
             | expression ',' 
@@ -381,11 +421,11 @@ method_call_params : {$$=nullptr;}
                 }
                 
                 param_counts.top()++;
-                $<node>$ = $1; 
+
              }
              method_call_params
              {
-                $$ = new ASTNode($<node>3, "ARG", $4);
+                $$ = new ASTNode($1, "ARG", $4);
              }
             ;
 
@@ -983,6 +1023,7 @@ fun_decl : TYPE ID '('
          {
                 ASTNode* bodyContent = $8;
                 currentScope = currentScope->exitScope();
+                cout<<"ADAUGA BODY FUNCTION IN SCOPE UL "<<currentScope->name<<endl;
                 currentScope->setFunctionBody($2, bodyContent);
                 parentScope = currentScope;
                 $$=nullptr;
@@ -996,6 +1037,7 @@ fun_decl_params :
 fun_param : TYPE ID
         {
                 parentScope->addParamName(funName, $2);
+                cout<<"ADDED PARAMETER "<<string($2)<<" TO FUNC"<<funName<<" IN SCOPE "<<parentScope->name;
                 parentScope->setFunctionParams(funName,$1);
                 cout<<"adding variable "<<$2<<"to scope "<<currentScope->name<<endl;
                 currentScope->addVariable($2,$1);
@@ -1100,7 +1142,7 @@ fun_call_params : {$$=nullptr;}
                 param_counts.top()++;
                 $$ = new ASTNode($1, "ARG", nullptr);
             }
-            | expression ',' fun_call_params
+            | expression ','
             {
                 string c_fun = calling_functions.top();
                 int c_idx = param_counts.top();
@@ -1108,8 +1150,11 @@ fun_call_params : {$$=nullptr;}
                      yyerror("Type mismatch");
                 }
                 param_counts.top()++;
-                $$ = new ASTNode($1, "ARG", $3);
 
+            }
+            fun_call_params
+            {
+                $$ = new ASTNode($1, "ARG", $4);
             }
             ;
 

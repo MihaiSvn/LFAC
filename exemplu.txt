@@ -4,10 +4,12 @@ class MyClass
 {
     class_var_section
         int a=10;
-        float b;
+        float b=12.0;
         bool x;
         int ps=23;
         int sir[10];
+        char vc[2]={'a','b'};
+        float cb=b;
 
     class_methods_section
         int method(int c,bool ds){
@@ -19,7 +21,12 @@ class MyClass
             return 14;
         }
         bool print(){
-            Print(12);
+            a=ps;
+            vc[1]='p';
+            if(a==ps){
+                return true;
+            }
+            return false;
         }
 
 }
@@ -44,6 +51,7 @@ global_var_section
     bool conditions[2]={true,false};
     bool egal;
 
+    int caa=a;
     char w,q,e;
 
     bool egal_check=false;
@@ -205,6 +213,7 @@ main
     
     Print("CMMDC pentru 48 si 18 este:");
     Print(rezultat);
+*/
 
     n=5;
     rez=factorial(n);
@@ -212,6 +221,8 @@ main
     Print("Factorial de 5 este:");
     Print(rez);
 
+
+/*
 
 Print(verifica_0(0));
 cautat=23;
@@ -224,8 +235,6 @@ cautat=23;
         Print("Elementul nu exista in vector.");
     }
 
-*/
-
 
 Print("Vectorul inainte de sortare:");
     Print("VEC INITIAL WHOOOO");
@@ -236,5 +245,18 @@ Print("Vectorul inainte de sortare:");
     Print("Vectorul dupa sortare:");
     printVector(n);
 
+
+
 //egal=verifEgal(1,1,1);
+MyClass idk = new MyClass();
+Print(idk.a);
+Print(idk.vc[1]);
+
+Print(idk.print());
+Print(idk.a);
+
+Print(idk.vc[1]);
+Print(idk.cb);
+Print(caa);
+*/
 end_main

@@ -13,6 +13,8 @@ class ASTNode;
 class SymTable{
     public:
     string name;
+    string instanceOwner="";
+    unordered_map<string,string> instances; //instance_id,type
     SymTable* parentScope;
     unordered_map<string,tuple<string,optional<string>,optional<string>>> variables; // nume, <tip, valoare, clasa>
     unordered_map<string,tuple<string,int,optional<vector<string>>,optional<string>>> vectors; // nume, <tip, numar_elemente, valoari, clasa>

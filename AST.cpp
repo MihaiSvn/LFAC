@@ -154,7 +154,10 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
     }
     else if (label=="CALL"){
             string fun_id = left->label;
+            cout<<"FUNCTIA APELATA "<<fun_id<<endl;
             vector<string> names = globalScope->getParamNames(fun_id);
+           
+            cout<<"SIZE VECTORII BLAHH "<<names.size()<<endl;
             ASTNode* body = globalScope->getFunctionBody(fun_id);
 
             if (!body) {
@@ -162,6 +165,18 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
             }
 
             SymTable* funcExecScope = new SymTable(fun_id + "_exec", globalScope);
+            int pozitie = fun_id.find('.');
+            if(pozitie!=string::npos){
+                currentScope->instanceOwner=fun_id.substr(0,pozitie);
+                cout<<"INSTANTA  "<<currentScope->instanceOwner<<endl;
+                string CLASS=globalScope->instances[currentScope->instanceOwner];
+                funcExecScope=currentScope->getChildScope(CLASS);
+                funcExecScope->instanceOwner=currentScope->instanceOwner;
+            }
+
+                cout<<"SCOPE UL MEU ESTE "<<funcExecScope->name<<endl;
+
+           
 
             ASTNode* pointer= this->right;
             //structura parametrii e nod entral ARG, nod stanga expresie, nod dreapta alt ARG, si asa mai departe
@@ -527,6 +542,8 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                 cout<<"ESTI PROST DE PUTI "<<endl;
             }
             ASTNode* rezultat=right->evaluate(currentScope);
+
+            cout<<"SCOPE UL IN FUNCTIE "<<currentScope->name<<endl;
             if(rezultat==nullptr){
                 cout<<"PROST MAI ESIT E NULL DREAPTA"<<endl;
             }
@@ -538,7 +555,6 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                 string varName = left->label;
 
                 auto var = currentScope->searchVariable(varName);
-
                 if (!var.has_value()) {
                     string tipDinNod = left->exprType; 
                     if (!tipDinNod.empty() && tipDinNod != "NONE") {
@@ -552,6 +568,17 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                     return new ASTNode("error", "Tried assigining values of different types", "error");
                 }
                 currentScope->updateVarValue(left->label,rezultat->getStringValue());
+                auto it = find(globalScope->classes.begin(),globalScope->classes.end(),currentScope->name);
+                if(it!=globalScope->classes.end()){ //daca scope ul e a unei clase modificam si valoarea in instanta
+                    string inst_var=globalScope->instanceOwner+'.'+left->label;
+                    cout<<"INST VAR E "<<inst_var<<endl;
+                    if(globalScope->searchVariable(inst_var)){
+                        globalScope->updateVarValue(inst_var,rezultat->getStringValue());  //MODIFIC SI VARIABILA DIN INSTANTA
+                    } else {
+                        cout<<"NU E BUNAAAAAAAA"<<endl;
+                    }
+                }
+                cout<<"INSTANCE UL MEU IN FUNCTIE E "<<currentScope->instanceOwner<<endl;
                 cout<<"AM UPDATAT CU SUCCES!"<<endl;
                 return rezultat;
             }
@@ -566,25 +593,37 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                 if (left->left == nullptr) return new ASTNode("error", "Invalid vector access", "error");
                 string fullVecName = left->left->label;
                 cout<<"FULL VECTOR NAMGE IN ASIGNARE MORTII MEI "<<fullVecName<<endl;
-
+                cout<<"SOPCE UL DIN ASIGN VECT "<<currentScope->name<<endl;
                 auto var = currentScope->searchVector(fullVecName);
-                if (currentScope->vectors.find(fullVecName) == currentScope->vectors.end()) {
-                    cout<<"mancatias sufletul is aici "<<endl;
-                    string vType = left->left->exprType;
-                    int sizeToAllocate = (idx>100) ? idx + 1 : 100;
-                    currentScope->addVector(fullVecName,vType,sizeToAllocate);
-
-                    cout << "RUNTIME: Vector " << fullVecName << " created on the fly in scope " 
-                 << currentScope->name << " with size " << sizeToAllocate << endl;
+                if (!var.has_value()) {
+                    string tipDinNod = left->left->exprType; 
+                    if (!tipDinNod.empty() && tipDinNod != "NONE") {
+                        int sizeToAllocate = (idx>100000) ? idx + 1 : 100000;
+                        currentScope->addVector(fullVecName,tipDinNod,sizeToAllocate);
+                        cout << "RUNTIME: Vector " << fullVecName << " created on the fly in scope " 
+                        << currentScope->name << " with size " << sizeToAllocate << endl;
+                    } else {
+                        return new ASTNode("error", "Variabila " + fullVecName + " nu a fost declarata!", "error");
+                    }
                 }
-
                 bool succes = currentScope->updateVectorElement(fullVecName, idx, rezultat->getStringValue());
+                auto it = find(globalScope->classes.begin(),globalScope->classes.end(),currentScope->name);
+                if(it!=globalScope->classes.end()){ //daca scope ul e a unei clase modificam si valoarea in instanta
+                    string inst_vec=globalScope->instanceOwner+'.'+left->left->label;
+                    cout<<"INST Vec E "<<inst_vec<<endl;
+                    if(globalScope->searchVector(inst_vec)){
+                        globalScope->updateVectorElement(inst_vec,idx,rezultat->getStringValue());  //MODIFIC SI VARIABILA DIN INSTANTA
+                    } else {
+                        cout<<"NU E BUNAAAAAAAA"<<endl;
+                    }
+                }
             
                 if (!succes) {
                     cerr << "Runtime Error: Could not update vector " << fullVecName << " at index " << idx << endl;
                 }
-            } 
                 return rezultat;
+
+            } 
             }
 
             //return new ASTNode("error", "Tried assigining a value to a non lvalue", "error");
@@ -655,6 +694,22 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                         currentScope->updateVectorElement(memberName, i, valueToSet);
                     }
                     
+                }
+                for (auto const& [funName, info] : classTemplate->functions) {
+                    string memberFunName = instanceName + "." + funName;
+                    string returnType = get<0>(info);
+                    optional<vector<string>> params = get<1>(info);
+                    optional<string> className = get<2>(info);
+                                                
+                    currentScope->addFunction(memberFunName, returnType, params, className);
+                                                
+                    ASTNode* body = classTemplate->getFunctionBody(funName);
+                    currentScope->setFunctionBody(memberFunName, body);
+                    auto parm=currentScope->getParamNames(funName);
+                    for(auto par:parm){
+                        currentScope->addParamName(memberFunName,par);
+                    }
+                                                
                 }
                 cout << "DEBUG: Instantiated object " << instanceName << " of class " << className << endl;
             }
