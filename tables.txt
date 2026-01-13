@@ -1,0 +1,320 @@
+ ========================================
+ SCOPE: global
+ ========================================
+ [Variables]
+   - tool.n          | Type: int        | Value: 5
+   - tool            | Type: MathToolbox | Value: null
+   - m               | Type: int        | Value: 50
+   - medie           | Type: int        | Value: 30
+   - fact_suma       | Type: int        | Value: 120
+   - suma_finala     | Type: int        | Value: 150
+ 
+ [Vectors]
+   - tool.sir        | Type: int        | Size: 5 | Elements: [30, 40, 20, 50, 10]
+   - sir             | Type: int        | Size: 10 | Elements: [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]
+ 
+ [Functions/Methods]
+   - tool.gasesteMax | Returns: int        | Member of: MathToolbox
+   - tool.printMethodVector | Returns: int        | Member of: MathToolbox
+   - tool.initSir    | Returns: int        | Member of: MathToolbox
+   - tool.calculeazaSuma | Returns: int        | Member of: MathToolbox
+   - tool.estePar    | Returns: bool       | Member of: MathToolbox
+   - tool.mediaSir   | Returns: int        | Member of: MathToolbox
+   - tool.inverseazaSir | Returns: int        | Member of: MathToolbox
+   - printVector     | Returns: int       
+   - bubbleSort      | Returns: int       
+   - factorial       | Returns: int       
+
+ ========================================
+ SCOPE: MathToolbox
+ ========================================
+ [Variables]
+   - limita          | Type: int        | Value: 2
+   - n               | Type: int        | Value: 5
+   - i               | Type: int        | Value: 5
+   - v2              | Type: int        | Value: 50
+   - v3              | Type: int        | Value: 20
+   - v1              | Type: int        | Value: 10
+   - v4              | Type: int        | Value: 40
+   - valoare         | Type: int        | Value: 50
+   - lungime         | Type: int        | Value: 5
+   - v5              | Type: int        | Value: 30
+   - suma            | Type: int        | Value: 150
+   - index           | Type: int        | Value: 1
+   - temp            | Type: int        | Value: 50
+   - max             | Type: int        | Value: 50
+ 
+ [Vectors]
+   - sir             | Type: int        | Size: 5 | Elements: [30, 40, 20, 50, 10]
+ 
+ [Functions/Methods]
+   - printMethodVector | Returns: int        | Member of: MathToolbox
+   - inverseazaSir   | Returns: int        | Member of: MathToolbox
+   - gasesteMax      | Returns: int        | Member of: MathToolbox
+   - mediaSir        | Returns: int        | Member of: MathToolbox
+   - estePar         | Returns: bool       | Member of: MathToolbox
+   - calculeazaSuma  | Returns: int        | Member of: MathToolbox
+   - initSir         | Returns: int        | Member of: MathToolbox
+
+ ========================================
+ SCOPE: initSir
+ ========================================
+ [Variables]
+   - v5              | Type: int        | Value: null
+   - v4              | Type: int        | Value: null
+   - v3              | Type: int        | Value: null
+   - v2              | Type: int        | Value: null
+   - v1              | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: calculeazaSuma
+ ========================================
+ [Variables]
+   - suma            | Type: int        | Value: 0
+   - i               | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: estePar
+ ========================================
+ [Variables]
+   - valoare         | Type: int        | Value: 0
+   - index           | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: gasesteMax
+ ========================================
+ [Variables]
+   - i               | Type: int        | Value: null
+   - max             | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: inverseazaSir
+ ========================================
+ [Variables]
+   - limita          | Type: int        | Value: null
+   - temp            | Type: int        | Value: null
+   - i               | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: mediaSir
+ ========================================
+ [Variables]
+   - i               | Type: int        | Value: null
+   - suma            | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: printMethodVector
+ ========================================
+ [Variables]
+   - i               | Type: int        | Value: null
+   - lungime         | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: MathToolbox
+ ========================================
+ [Variables]
+   - limita          | Type: int        | Value: 2
+   - n               | Type: int        | Value: 5
+   - i               | Type: int        | Value: 5
+   - v2              | Type: int        | Value: 50
+   - v3              | Type: int        | Value: 20
+   - v1              | Type: int        | Value: 10
+   - v4              | Type: int        | Value: 40
+   - valoare         | Type: int        | Value: 50
+   - lungime         | Type: int        | Value: 5
+   - v5              | Type: int        | Value: 30
+   - suma            | Type: int        | Value: 150
+   - index           | Type: int        | Value: 1
+   - temp            | Type: int        | Value: 50
+   - max             | Type: int        | Value: 50
+ 
+ [Vectors]
+   - sir             | Type: int        | Size: 5 | Elements: [30, 40, 20, 50, 10]
+ 
+ [Functions/Methods]
+   - printMethodVector | Returns: int        | Member of: MathToolbox
+   - inverseazaSir   | Returns: int        | Member of: MathToolbox
+   - gasesteMax      | Returns: int        | Member of: MathToolbox
+   - mediaSir        | Returns: int        | Member of: MathToolbox
+   - estePar         | Returns: bool       | Member of: MathToolbox
+   - calculeazaSuma  | Returns: int        | Member of: MathToolbox
+   - initSir         | Returns: int        | Member of: MathToolbox
+
+ ========================================
+ SCOPE: initSir
+ ========================================
+ [Variables]
+   - v5              | Type: int        | Value: null
+   - v4              | Type: int        | Value: null
+   - v3              | Type: int        | Value: null
+   - v2              | Type: int        | Value: null
+   - v1              | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: calculeazaSuma
+ ========================================
+ [Variables]
+   - suma            | Type: int        | Value: 0
+   - i               | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: estePar
+ ========================================
+ [Variables]
+   - valoare         | Type: int        | Value: 0
+   - index           | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: gasesteMax
+ ========================================
+ [Variables]
+   - i               | Type: int        | Value: null
+   - max             | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: inverseazaSir
+ ========================================
+ [Variables]
+   - limita          | Type: int        | Value: null
+   - temp            | Type: int        | Value: null
+   - i               | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: mediaSir
+ ========================================
+ [Variables]
+   - i               | Type: int        | Value: null
+   - suma            | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: printMethodVector
+ ========================================
+ [Variables]
+   - i               | Type: int        | Value: null
+   - lungime         | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: factorial
+ ========================================
+ [Variables]
+   - rez_mic         | Type: int        | Value: null
+   - n               | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: bubbleSort
+ ========================================
+ [Variables]
+   - temp            | Type: int        | Value: null
+   - j               | Type: int        | Value: null
+   - i               | Type: int        | Value: null
+   - lungime         | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+
+ ========================================
+ SCOPE: printVector
+ ========================================
+ [Variables]
+   - i               | Type: int        | Value: null
+   - lungime         | Type: int        | Value: null
+ 
+ [Vectors]
+   (none)
+ 
+ [Functions/Methods]
+   (none)
+

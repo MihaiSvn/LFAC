@@ -324,6 +324,69 @@ SymTable* SymTable::exitScope(){
     return this->parentScope;
 }
 
+#include <iomanip>
 
+void SymTable::printTableToFile(std::ofstream& fout) {
+    string space=" ";
+    
+    fout << space << "========================================\n";
+    fout << space << "SCOPE: " << this->name << "\n";
+    fout << space << "========================================\n";
 
+    // variabile
+    fout << space << "[Variables]\n";
+    if (variables.empty()) fout << space << "  (none)\n";
+    for (auto const& [name, info] : variables) {
+        auto [type, value, className] = info;
+        fout << space << "  - " << name 
+             << " | Type: " << std::setw(10) << type 
+             << " | Value: " << (value.has_value() ? value.value() : "null") << "\n";
+    }
 
+    // vectori
+    fout << space << "\n" << space << "[Vectors]\n";
+    if (vectors.empty()) fout << space << "  (none)\n";
+    for (auto const& [name, info] : vectors) {
+        auto [type, size, values, className] = info;
+        fout << space << "  - " << std::left << std::setw(15) << name 
+             << " | Type: " << std::setw(10) << type 
+             << " | Size: " << size << " | Elements: [";
+        if (values.has_value()) {
+            for (size_t i = 0; i < values.value().size(); ++i) {
+                fout << values.value()[i] << (i == values.value().size() - 1 ? "" : ", ");
+            }
+        }
+        fout << "]\n";
+    }
+
+    // functii
+    fout << space << "\n" << space << "[Functions/Methods]\n";
+    if (functions.empty()) fout << space << "  (none)\n";
+    for (auto const& [name, info] : functions) {
+        auto [type, params, className] = info;
+        fout << space << "  - " << std::left << std::setw(15) << name 
+             << " | Returns: " << std::setw(10) << type;
+        if (className.has_value()) fout << " | Member of: " << className.value();
+        fout << "\n";
+    }
+
+    fout << "\n";
+
+    // mers in copii
+    for (SymTable* child : childScopes) {
+        if (child != nullptr) {
+            child->printTableToFile(fout);
+        }
+    }
+}
+
+void SymTable::generateTableFile(SymTable* globalScope, const std::string& filename) {
+    std::ofstream fout(filename);
+    if (!fout.is_open()) {
+        std::cerr << "Nu s-a putut deschide fisierul pentru tabelele de simboluri!\n";
+        return;
+    }
+    globalScope->printTableToFile(fout);
+    fout.close();
+    std::cout << "Tabelele de simboluri au fost salvate in " << filename << std::endl;
+}

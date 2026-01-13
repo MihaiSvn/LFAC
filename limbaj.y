@@ -79,6 +79,7 @@ if(errorCount == 0 && $4 != nullptr) {
         cout << "--- Start Execution ---" << endl;
         $4->evaluate(globalScope);
         cout << "--- Execution Finished Successfully ---" << endl;
+        SymTable::generateTableFile(globalScope,"tables.txt");
 
     }
 
