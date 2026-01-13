@@ -37,7 +37,7 @@ ASTNode::ASTNode(string type, string value, string exprType){
         this->type=astID;
         this->label=value;
         this->exprType=exprType;
-        cout<<"AVEM ID-UL "<<value<<" CU TIPUL "<<exprType<<endl;
+        //cout<<"AVEM ID-UL "<<value<<" CU TIPUL "<<exprType<<endl;
 
     }
     else if(type=="error"){
@@ -127,7 +127,7 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
 
     if (this == nullptr) return nullptr;
 
-    cout << "Evaluate nod: " << label << " | Type: " << this->type << endl;
+    //cout << "Evaluate nod: " << label << " | Type: " << this->type << endl;
 
     if (label == "ARG") {
         return left->evaluate(currentScope);
@@ -154,10 +154,10 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
     }
     else if (label=="CALL"){
             string fun_id = left->label;
-            cout<<"FUNCTIA APELATA "<<fun_id<<endl;
+            //cout<<"FUNCTIA APELATA "<<fun_id<<endl;
             vector<string> names = globalScope->getParamNames(fun_id);
            
-            cout<<"SIZE VECTORII BLAHH "<<names.size()<<endl;
+            //cout<<"SIZE VECTORII BLAHH "<<names.size()<<endl;
             ASTNode* body = globalScope->getFunctionBody(fun_id);
 
             if (!body) {
@@ -168,13 +168,13 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
             int pozitie = fun_id.find('.');
             if(pozitie!=string::npos){
                 currentScope->instanceOwner=fun_id.substr(0,pozitie);
-                cout<<"INSTANTA  "<<currentScope->instanceOwner<<endl;
+                //cout<<"INSTANTA  "<<currentScope->instanceOwner<<endl;
                 string CLASS=globalScope->instances[currentScope->instanceOwner];
                 funcExecScope=currentScope->getChildScope(CLASS);
                 funcExecScope->instanceOwner=currentScope->instanceOwner;
             }
 
-                cout<<"SCOPE UL MEU ESTE "<<funcExecScope->name<<endl;
+                //cout<<"SCOPE UL MEU ESTE "<<funcExecScope->name<<endl;
 
            
 
@@ -185,43 +185,43 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                     break;
                 ASTNode* evalArg=pointer->left->evaluate(currentScope);
 
-                cout << "--- DEBUG CALL ---" << endl;
-                cout << "Nume Parametru: " << names[i] << endl;
-                cout << "Tip Nod Evaluat: " << evalArg->type << endl; // 0=int, 5=id, etc.
-                cout << "Label Evaluat: " << evalArg->label << endl;
-                cout << "Valoare String: " << evalArg->getStringValue() << endl;
+                //cout << "--- DEBUG CALL ---" << endl;
+                //cout << "Nume Parametru: " << names[i] << endl;
+                //cout << "Tip Nod Evaluat: " << evalArg->type << endl; // 0=int, 5=id, etc.
+                //cout << "Label Evaluat: " << evalArg->label << endl;
+                //cout << "Valoare String: " << evalArg->getStringValue() << endl;
 
                 
                 funcExecScope->addVariable(names[i], evalArg->exprType,evalArg->getStringValue());
 
                 auto [tip,valoare,clasa]=funcExecScope->variables[names[i]];
 
-                cout<<"variaible din functie "<<names[i]<<" a primit valaorea "<<valoare.value()<<endl;
+                //cout<<"variaible din functie "<<names[i]<<" a primit valaorea "<<valoare.value()<<endl;
 
                 pointer = pointer->right;
             }
-            cout<<"EXECUTING FUNCTION "<<fun_id<<endl;
+            //cout<<"EXECUTING FUNCTION "<<fun_id<<endl;
 
             //body->printAST(0);
             ASTNode* rez=body->evaluate(funcExecScope);
-            cout<<"TAGUL LA REZ ESTEEEE "<<rez->label<<endl;
+            //cout<<"TAGUL LA REZ ESTEEEE "<<rez->label<<endl;
 
             if (rez != nullptr && rez->label == "RETURN_SIGNAL") {
                 ASTNode* finalValue = new ASTNode(rez->get_type(), rez->getStringValue(), rez->exprType);
-                cout << "CALL returneaza la main: " << rez->getStringValue() << endl;
+                //cout << "CALL returneaza la main: " << rez->getStringValue() << endl;
                 return finalValue;
             }
-            cout << "CALL returneaza la main: NULLLLL" << rez->getStringValue() << endl;
+            //cout << "CALL returneaza la main: NULLLLL" << rez->getStringValue() << endl;
             return rez;
     } else if (label == "IF") {
-            cout << "DEBUG: Conditie IF am INTRAT"<<endl;
+            //cout << "DEBUG: Conditie IF am INTRAT"<<endl;
 
             ASTNode* cond = left->evaluate(currentScope);
-            cout << "DEBUG: Conditie IF evaluata ca: " << (cond->value.bVal ? "TRUE" : "FALSE") << endl;
+            //cout << "DEBUG: Conditie IF evaluata ca: " << (cond->value.bVal ? "TRUE" : "FALSE") << endl;
 
             if (cond->type == astBOOL) {
                 if(cond->value.bVal == true){
-                    cout << "DEBUG: Intru pe ramura TRUE" << endl;
+                    //cout << "DEBUG: Intru pe ramura TRUE" << endl;
                     if (right->label == "IF_ELSE_LINK") {
                         ASTNode* res = right->left->evaluate(currentScope);
                         if (res != nullptr && res->label == "RETURN_SIGNAL") return res;
@@ -241,7 +241,7 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                 }
                 
             } else {
-                cout << "DEBUG: Intru pe ramura FALSE (ELSE)" << endl;
+                //cout << "DEBUG: Intru pe ramura FALSE (ELSE)" << endl;
                 if (right && right->label == "IF_ELSE_LINK") {
                     if (right->right) return right->right->evaluate(currentScope);
                 }
@@ -251,10 +251,9 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
         //IN STANGA CONDITIA, IN DREAPTA CORPUL BUCLEI
     else if (label == "WHILE") {
             while (true) {
-                left->printAST(0);
-                cout<<"a este "<<left->left->getStringValue()<<endl;
+                //left->printAST(0);
+                //cout<<"a este "<<left->left->getStringValue()<<endl;
                 ASTNode* cond = left->evaluate(currentScope); 
-                cout<<"CONDITIA MATIIIIII"<< cond->label<< cond->getStringValue()<<endl;
                 if (cond->type == astBOOL && cond->value.bVal == true) {
                     ASTNode* res=right->evaluate(currentScope);
                     if (res != nullptr && res->label == "RETURN_SIGNAL") {
@@ -269,7 +268,7 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
 
         //stanga blockul de instructiuni, dreapta conditia
          else if(label=="DO-WHILE"){
-            printAST(0);
+            //printAST(0);
             while(true){
                 if(left){
                     ASTNode* res=left->evaluate(currentScope);
@@ -294,7 +293,7 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
         //IN STANGA CONDITIA DE INITIALIZARE, IN DREAPTA UN ALT NOD CARE IN STANGA ARE CONDITIA, IAR IN DREAPTA UN ALT NOD CARE IN STANGA ARE PASUL, IAR IN DREAPTA CORPUL LUI FOR
     else if (label == "FOR") {
 
-        printAST(0);
+        //printAST(0);
         if (left) left->evaluate(currentScope);
 
         ASTNode* forRest = right;
@@ -321,11 +320,10 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
     if(left==nullptr && right==nullptr){  //frunza, avem fie id, fie o valoarea
         
         if(this->type==astID){
-            cout<<"INTRU VREODATA AICI??"<<endl;
+            //cout<<"INTRU VREODATA AICI??"<<endl;
             auto var=currentScope->searchVariable(label);
             if(var==nullopt){
-                cout << "DEBUG: Variabila " << label << " nu a fost gasita in niciun scope!" << endl;
-                cout<<"Esti prost de puti tata"<<endl;
+                //cout << "DEBUG: Variabila " << label << " nu a fost gasita in niciun scope!" << endl;
             }
             if(!var.has_value()){
                 return new ASTNode("int","0","int");
@@ -379,14 +377,16 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
         }
         //PRINT
         else if (label == "PRINT") {
-            cout<<"intru aici??"<<endl;
+            //cout<<"intru aici??"<<endl;
             ASTNode* rezultat = left->evaluate(currentScope);
             if(rezultat==nullptr) return nullptr;
             if (rezultat->type == astERROR) {
                 return rezultat;
             }
-
-            cout << "[Output]: " << rezultat->getStringValue() << endl;
+            if(rezultat->getStringValue()=="NEWLINE_TOKEN"){
+                cout<<endl<<"[Output]: ";
+            }
+            else cout << rezultat->getStringValue()<<" ";
             return rezultat;
         }
         else if (label=="RETURN"){
@@ -406,7 +406,7 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
 
     // OPERATII BINARE
     else if(left!=nullptr && right!=nullptr){
-    cout << "Evaluate nod BINAR: " << label << " | Type: " << this->type << endl;
+    //cout << "Evaluate nod BINAR: " << label << " | Type: " << this->type << endl;
 
         //IN STANGA CONDITIA, IN DREAPTA UN NOD BODY CARE IN STANGA ARE THEN, IAR IN DREAPTA RAMURILE ELSE
         
@@ -494,11 +494,11 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
             }
             int idx=index->value.iVal;
 
-            cout << "DEBUG VECTOR: Accesam indexul real: " << idx << endl;
+            //cout << "DEBUG VECTOR: Accesam indexul real: " << idx << endl;
             
             string numeRealVector = this->left->label;
 
-            cout<<"FULL VECTOR NAMGE IN ACCESS "<<numeRealVector<<endl;
+            //cout<<"FULL VECTOR NAMGE IN ACCESS "<<numeRealVector<<endl;
 
 
             auto var=currentScope->searchVector(numeRealVector);
@@ -536,21 +536,17 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
         
         //ASSIGN
         else if(label==":="){
-            cout<<"am intrat in assign "<<endl;
-            cout<<"TIPUL PULII "<<left->type<<endl;
+            //cout<<"am intrat in assign "<<endl;
             if(right==nullptr){
-                cout<<"ESTI PROST DE PUTI "<<endl;
             }
             ASTNode* rezultat=right->evaluate(currentScope);
 
-            cout<<"SCOPE UL IN FUNCTIE "<<currentScope->name<<endl;
+            //cout<<"SCOPE UL IN FUNCTIE "<<currentScope->name<<endl;
             if(rezultat==nullptr){
-                cout<<"PROST MAI ESIT E NULL DREAPTA"<<endl;
             }
             //DACA E ID SIMPLUFlv
             if(left->type==astID){
-                cout<<"Am intart aici bre"<<endl;
-                cout<<"VALOAREA MEA DE UPDATE E "<<rezultat->getStringValue()<<endl;
+                //cout<<"VALOAREA MEA DE UPDATE E "<<rezultat->getStringValue()<<endl;
 
                 string varName = left->label;
 
@@ -559,7 +555,7 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                     string tipDinNod = left->exprType; 
                     if (!tipDinNod.empty() && tipDinNod != "NONE") {
                         currentScope->addVariable(varName, tipDinNod);
-                        cout << "RUNTIME: Am creat variabila locala " << varName << " de tip " << tipDinNod << endl;
+                        //cout << "RUNTIME: Am creat variabila locala " << varName << " de tip " << tipDinNod << endl;
                     } else {
                         return new ASTNode("error", "Variabila " + varName + " nu a fost declarata!", "error");
                     }
@@ -571,15 +567,15 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                 auto it = find(globalScope->classes.begin(),globalScope->classes.end(),currentScope->name);
                 if(it!=globalScope->classes.end()){ //daca scope ul e a unei clase modificam si valoarea in instanta
                     string inst_var=globalScope->instanceOwner+'.'+left->label;
-                    cout<<"INST VAR E "<<inst_var<<endl;
+                    //cout<<"INST VAR E "<<inst_var<<endl;
                     if(globalScope->searchVariable(inst_var)){
                         globalScope->updateVarValue(inst_var,rezultat->getStringValue());  //MODIFIC SI VARIABILA DIN INSTANTA
                     } else {
-                        cout<<"NU E BUNAAAAAAAA"<<endl;
+                        //cout<<"NU E BUNAAAAAAAA"<<endl;
                     }
                 }
-                cout<<"INSTANCE UL MEU IN FUNCTIE E "<<currentScope->instanceOwner<<endl;
-                cout<<"AM UPDATAT CU SUCCES!"<<endl;
+                //cout<<"INSTANCE UL MEU IN FUNCTIE E "<<currentScope->instanceOwner<<endl;
+                //cout<<"AM UPDATAT CU SUCCES!"<<endl;
                 return rezultat;
             }
 
@@ -592,16 +588,16 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                 int idx = indexNode->value.iVal;
                 if (left->left == nullptr) return new ASTNode("error", "Invalid vector access", "error");
                 string fullVecName = left->left->label;
-                cout<<"FULL VECTOR NAMGE IN ASIGNARE MORTII MEI "<<fullVecName<<endl;
-                cout<<"SOPCE UL DIN ASIGN VECT "<<currentScope->name<<endl;
+                //cout<<"FULL VECTOR NAMGE IN ASIGNARE MORTII MEI "<<fullVecName<<endl;
+                //cout<<"SOPCE UL DIN ASIGN VECT "<<currentScope->name<<endl;
                 auto var = currentScope->searchVector(fullVecName);
                 if (!var.has_value()) {
                     string tipDinNod = left->left->exprType; 
                     if (!tipDinNod.empty() && tipDinNod != "NONE") {
                         int sizeToAllocate = (idx>100000) ? idx + 1 : 100000;
                         currentScope->addVector(fullVecName,tipDinNod,sizeToAllocate);
-                        cout << "RUNTIME: Vector " << fullVecName << " created on the fly in scope " 
-                        << currentScope->name << " with size " << sizeToAllocate << endl;
+                        //cout << "RUNTIME: Vector " << fullVecName << " created on the fly in scope " 
+                        //<< currentScope->name << " with size " << sizeToAllocate << endl;
                     } else {
                         return new ASTNode("error", "Variabila " + fullVecName + " nu a fost declarata!", "error");
                     }
@@ -610,11 +606,11 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                 auto it = find(globalScope->classes.begin(),globalScope->classes.end(),currentScope->name);
                 if(it!=globalScope->classes.end()){ //daca scope ul e a unei clase modificam si valoarea in instanta
                     string inst_vec=globalScope->instanceOwner+'.'+left->left->label;
-                    cout<<"INST Vec E "<<inst_vec<<endl;
+                    //cout<<"INST Vec E "<<inst_vec<<endl;
                     if(globalScope->searchVector(inst_vec)){
                         globalScope->updateVectorElement(inst_vec,idx,rezultat->getStringValue());  //MODIFIC SI VARIABILA DIN INSTANTA
                     } else {
-                        cout<<"NU E BUNAAAAAAAA"<<endl;
+                        //cout<<"NU E BUNAAAAAAAA"<<endl;
                     }
                 }
             
@@ -636,7 +632,7 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
         
         if (label == "NEW_CLASS") {
 
-            cout<<"AM INTRAT IN NODULNEW_C;LASS SKIBIDY"<<endl;
+            //cout<<"AM INTRAT IN NODULNEW_C;LASS SKIBIDY"<<endl;
             string instanceName = left->label;
             string className = right->label;
 
@@ -654,14 +650,14 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                     else if (type == "bool") defaultValue = "false";
                     else if (type == "string") defaultValue = "";
                     else if (type == "char") defaultValue = " ";
-                    else defaultValue = "0"; // fallback
+                    else defaultValue = "0";
                     if (get<1>(info).has_value()) {
                         defaultValue = get<1>(info).value();
                     }
                     
                     currentScope->addVariable(memberName, type);
                     currentScope->updateVarValue(memberName, defaultValue);
-                    cout<<"ADDED VARIABLE "<<memberName<<" WITH VALUE "<<defaultValue<<endl;
+                    //cout<<"ADDED VARIABLE "<<memberName<<" WITH VALUE "<<defaultValue<<endl;
                 }
                 for (auto const& [vecName, info] : classTemplate->vectors) {
                     string memberName = instanceName + "." + vecName;
@@ -674,11 +670,11 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                     else if (type == "bool") defaultValue = "false";
                     else if (type == "string") defaultValue = "";
                     else if (type == "char") defaultValue = " ";
-                    else defaultValue = "0"; // fallback
+                    else defaultValue = "0";
             
                     
                     currentScope->addVector(memberName, type, size);
-                    cout<<"ADDED VARIABLE "<<memberName<<" WITH VALUE "<< "0" <<endl;
+                    //cout<<"ADDED VARIABLE "<<memberName<<" WITH VALUE "<< "0" <<endl;
 
                 
                     for (int i = 0; i < size; i++) {
@@ -711,7 +707,7 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                     }
                                                 
                 }
-                cout << "DEBUG: Instantiated object " << instanceName << " of class " << className << endl;
+                //cout << "DEBUG: Instantiated object " << instanceName << " of class " << className << endl;
             }
             return nullptr;
         }

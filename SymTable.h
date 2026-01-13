@@ -7,6 +7,7 @@
 #include <fstream>
 #include <tuple>
 #include <unordered_set>
+#include <fstream>
 using namespace std;
 
 class ASTNode;
@@ -65,4 +66,8 @@ class SymTable{
     SymTable* getChildScope(const string& scopeName);
     SymTable* enterScope(const string& newScopeName);
     SymTable* exitScope();
+
+    void printTableToFile(std::ofstream& fout);
+    static void generateTableFile(SymTable* globalScope, const std::string& filename);
+    
 };

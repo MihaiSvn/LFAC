@@ -53,7 +53,7 @@ string current_init_vec_name;
         class ASTNode* node;
         vector<string>* idList;
 }
-%token <stringVal>TYPE CLASS_SECTION CLASS_VAR_SECTION CLASS_METHODS_SECTION CLASS GVAR_SECTION GFUN_SECTION NEW ASSIGN IF ELSE WHILE FOR DO COMPARE <stringVal>ID <intVal>INT <boolVal>BOOL <floatVal>FLOAT <stringVal>STRING <charVal>CHAR AUTO PRINT MAIN_BEGIN MAIN_END <stringVal>OPERATOR INC DEC NOT RETURN
+%token <stringVal>TYPE CLASS_SECTION CLASS_VAR_SECTION CLASS_METHODS_SECTION CLASS GVAR_SECTION GFUN_SECTION NEW ASSIGN IF ELSE WHILE FOR DO COMPARE <stringVal>ID <intVal>INT <boolVal>BOOL <floatVal>FLOAT <stringVal>STRING <charVal>CHAR AUTO PRINT MAIN_BEGIN MAIN_END <stringVal>OPERATOR INC DEC NOT RETURN NEWLINE
 
 
 %type <node> expression expression_elem statement if_statement while_statement factor term exp for_assign for_statement do_while_statement
@@ -173,7 +173,7 @@ class_create_instance : ID ID ASSIGN NEW ID '('')'
                                         
                                                 
                                                 currentScope->addVector(memberName, type, size);
-                                                cout<<"ADDED VARIABLE "<<memberName<<" WITH VALUE "<< "0" <<endl;
+                                                //cout<<"ADDED VARIABLE "<<memberName<<" WITH VALUE "<< "0" <<endl;
 
                                                 
                                                 for (int i = 0; i < size; i++) {
@@ -199,20 +199,17 @@ class_create_instance : ID ID ASSIGN NEW ID '('')'
                                                 currentScope->addFunction(memberFunName, returnType, params, className);
                                                 
                                                 ASTNode* body = classTemplate->getFunctionBody(funName);
-                                                if(body==nullptr){
-                                                        cout<<"NU AM FUNCTION BODYY"<<endl;
-                                                }
+                                                
                                                 currentScope->setFunctionBody(memberFunName, body);
-                                                cout<<"SUNT AICIIIIIII RAWWWW "<<endl;
                                                 auto parm=classTemplate->getParamNames(funName);
                                                 for(int i=0;i<parm.size();i++){
-                                                        cout<<"PARAMETRUL E ADAUGAT LA FUNCTIA "<<memberFunName<<" "<<parm[i]<<endl;
+                                                        //cout<<"PARAMETRUL E ADAUGAT LA FUNCTIA "<<memberFunName<<" "<<parm[i]<<endl;
                                                         currentScope->addParamName(memberFunName,parm[i]);
                                                 }
                                                 
-                                                cout << "DEBUG: Linked method " << memberFunName << " to object " << string($2) << endl;
+                                                //cout << "DEBUG: Linked method " << memberFunName << " to object " << string($2) << endl;
                                         }
-                                        cout << "DEBUG: Instantiated object " << string($2) << " of class " << string($1) << endl;
+                                        //cout << "DEBUG: Instantiated object " << string($2) << " of class " << string($1) << endl;
 
                                 }
 
@@ -339,7 +336,7 @@ class_method_call : ID '.' ID  //vezi sa pui ID.fun_call si intri intr-un scope 
                                 yyerror("Tried calling a method on a non-class variable");
                         }
 
-                        cout<<"Searching for method "<<$3<<endl;
+                        //cout<<"Searching for method "<<$3<<endl;
                         
                         string classType = currentScope->getType($1);
                         auto fun=currentScope->searchMethodInClass(classType,$3,globalScope);
@@ -374,7 +371,7 @@ class_method_call : ID '.' ID  //vezi sa pui ID.fun_call si intri intr-un scope 
                         string current_fun = calling_functions.top();
                         string fullName = string($1) + "." + string($3);
                         int total_params = param_counts.top();
-                        cout<<"NR PARAMETRII CURENTI "<<total_params<<endl;
+                       // cout<<"NR PARAMETRII CURENTI "<<total_params<<endl;
                         if(aux->verifParamNumber(current_fun, total_params) == false){
                                 string msg="The method "+current_fun+" doesn't have the correct number of parameters";
                                 yyerror(msg.c_str());
@@ -407,7 +404,7 @@ method_call_params : {$$=nullptr;}
                     yyerror(msg.c_str());
                 }
                 param_counts.top()++;
-                cout<<"EXPRESIA MEAA DIN ARGGG "<<$1->getStringValue()<<" "<<$1->exprType<<endl; 
+                //cout<<"EXPRESIA MEAA DIN ARGGG "<<$1->getStringValue()<<" "<<$1->exprType<<endl; 
                 $$ = new ASTNode($1, "ARG", nullptr);
             }
             | expression ',' 
@@ -707,7 +704,7 @@ var_decl : TYPE ID
                   auto& classes = globalScope->classes;
                   if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
                      className = parentName;
-                        cout<<"added variable "<<$2<<" to class "<<parentName<<endl;
+                        //cout<<"added variable "<<$2<<" to class "<<parentName<<endl;
                   }
                 }
                 if(currentScope->addVariable($2,$1,nullopt,className)){
@@ -753,7 +750,7 @@ var_decl : TYPE ID
                                 auto& classes = globalScope->classes;
                                 if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
                                 className = parentName;
-                                        cout<<"added function "<<idName<<" to class "<<parentName<<endl;
+                                        //cout<<"added function "<<idName<<" to class "<<parentName<<endl;
                                 }
                                 }
                                 if(currentScope->addVariable(idName,$1,nullopt,className)){
@@ -781,7 +778,7 @@ var_decl : TYPE ID
                   auto& classes = globalScope->classes;
                   if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
                      className = parentName;
-                        cout<<"added var "<<$2<<" to class "<<parentName<<endl;
+                        //cout<<"added var "<<$2<<" to class "<<parentName<<endl;
                   }
                 }
                 if(currentScope->addVariable($2,$1,nullopt,className)){
@@ -803,7 +800,6 @@ var_decl : TYPE ID
                 if($5->type != astERROR){
                         currentScope->updateVarValue($2, $5->getStringValue());
                 }
-                cout<<"TIPUL MEU E ASTA UAII "<<$1<<endl;
                 ASTNode* varNode = new ASTNode("id", $2, $1);
                 $$ = new ASTNode(varNode, ":=", $5);
              }
@@ -817,12 +813,12 @@ var_decl : TYPE ID
                   auto& classes = globalScope->classes;
                   if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
                      className = parentName;
-                        cout<<"added var "<<$2<<" to class "<<parentName<<endl;
+                        //cout<<"added var "<<$2<<" to class "<<parentName<<endl;
                   }
                 }
 
                 string tip=$4->exprType;
-                cout<<"TIPUL PE CARE IL VA LUA AUTO UL MEU ESTE "<<tip<<endl;
+                //cout<<"TIPUL PE CARE IL VA LUA AUTO UL MEU ESTE "<<tip<<endl;
                 if(currentScope->addVariable($2,tip.c_str(),nullopt,className)){
                         currentVarName= $2;
                         currentVarType = (char*)tip.c_str();
@@ -845,7 +841,7 @@ var_decl : TYPE ID
                   auto& classes = globalScope->classes;
                   if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
                      className = parentName;
-                        cout<<"added Vector "<<$2<<" to class "<<parentName<<endl;
+                        //cout<<"added Vector "<<$2<<" to class "<<parentName<<endl;
                   }
                 }
                 if($4->exprType!="int"){
@@ -905,7 +901,7 @@ var_decl : TYPE ID
                   auto& classes = globalScope->classes;
                   if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
                      className = parentName;
-                        cout<<"added Vector "<<$2<<" to class "<<parentName<<endl;
+                        //cout<<"added Vector "<<$2<<" to class "<<parentName<<endl;
                   }
                 }
                 if($4->exprType!="int"){
@@ -922,7 +918,7 @@ var_decl : TYPE ID
                 }
                 current_init_vec_name=string($2);
                 numberOfElementsToAdd=atoi($4->getStringValue().c_str());
-                cout<<"NUMBER OF ELEMENTS TO ADD "<<numberOfElementsToAdd<<endl;
+                //cout<<"NUMBER OF ELEMENTS TO ADD "<<numberOfElementsToAdd<<endl;
              }
               '{' vector_elements '}'
               {
@@ -1005,7 +1001,7 @@ fun_decl : TYPE ID '('
                   auto& classes = globalScope->classes;
                   if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
                      className = parentName;
-                        cout<<"added function "<<$2<<" to class "<<parentName<<endl;
+                        //cout<<"added function "<<$2<<" to class "<<parentName<<endl;
                   }
                 }
 
@@ -1023,7 +1019,7 @@ fun_decl : TYPE ID '('
          {
                 ASTNode* bodyContent = $8;
                 currentScope = currentScope->exitScope();
-                cout<<"ADAUGA BODY FUNCTION IN SCOPE UL "<<currentScope->name<<endl;
+                //cout<<"ADAUGA BODY FUNCTION IN SCOPE UL "<<currentScope->name<<endl;
                 currentScope->setFunctionBody($2, bodyContent);
                 parentScope = currentScope;
                 $$=nullptr;
@@ -1037,9 +1033,9 @@ fun_decl_params :
 fun_param : TYPE ID
         {
                 parentScope->addParamName(funName, $2);
-                cout<<"ADDED PARAMETER "<<string($2)<<" TO FUNC"<<funName<<" IN SCOPE "<<parentScope->name;
+                //cout<<"ADDED PARAMETER "<<string($2)<<" TO FUNC"<<funName<<" IN SCOPE "<<parentScope->name;
                 parentScope->setFunctionParams(funName,$1);
-                cout<<"adding variable "<<$2<<"to scope "<<currentScope->name<<endl;
+                //cout<<"adding variable "<<$2<<"to scope "<<currentScope->name<<endl;
                 currentScope->addVariable($2,$1);
         }
             ;
@@ -1086,7 +1082,7 @@ block_element : statement ';'
 
 return_statement: RETURN expression ';'
                 {
-                        cout<<string(funType)<<' '<<$2->exprType<<endl;
+                        //cout<<string(funType)<<' '<<$2->exprType<<endl;
                         if(string(funType)!=$2->exprType){
                                 string msg="Return type of function "+string(funName)+" must be of type ["+string(funType)+"], received type ["+$2->exprType+"] instead.";
                                 yyerror(msg.c_str());
@@ -1165,6 +1161,7 @@ fun_call_params : {$$=nullptr;}
 //    ################# FUNCTII PREDEFINITE ###########################
 
 print_expr: expression {$$=$1;}
+          | NEWLINE {$$=new ASTNode("string","NEWLINE_TOKEN","string");}
             ;
 
 print_statement : PRINT '(' print_expr ')' {
@@ -1201,7 +1198,7 @@ statement: ID ASSIGN expression
                         yyerror(msg.c_str());
                 }
                 string typeVarToBeAssigned=currentScope->getType($1);
-                cout<<"TYPE TO ASSIGN: "<<typeVarToBeAssigned<<endl;
+                //cout<<"TYPE TO ASSIGN: "<<typeVarToBeAssigned<<endl;
                 if(typeVarToBeAssigned=="int" || typeVarToBeAssigned=="float"){
                         ASTNode* idNode = new ASTNode("id", $1, typeVarToBeAssigned);
                         ASTNode* unu = new ASTNode("int", "1", "int");
@@ -1226,7 +1223,7 @@ statement: ID ASSIGN expression
                         yyerror(msg.c_str());
                 }
                 string typeVarToBeAssigned=currentScope->getType($1);
-                cout<<"TYPE TO ASSIGN: "<<typeVarToBeAssigned<<endl;
+                //cout<<"TYPE TO ASSIGN: "<<typeVarToBeAssigned<<endl;
                 if(typeVarToBeAssigned=="int" || typeVarToBeAssigned=="float"){
                         ASTNode* idNode = new ASTNode("id", $1, typeVarToBeAssigned);
                         ASTNode* unu = new ASTNode("int", "1", "int");
@@ -1304,7 +1301,7 @@ statement: ID ASSIGN expression
                         yyerror(msg.c_str());
                 }
                 string typeVarToBeAssigned=currentScope->getType($1);
-                cout<<"TYPE TO ASSIGN: "<<typeVarToBeAssigned<<endl;
+                //cout<<"TYPE TO ASSIGN: "<<typeVarToBeAssigned<<endl;
                 if(typeVarToBeAssigned=="int" || typeVarToBeAssigned=="float"){
                         //change value
                 } else {
@@ -1343,7 +1340,7 @@ statement: ID ASSIGN expression
                         yyerror(msg.c_str());
                 }
                 string typeVarToBeAssigned=currentScope->getType($1);
-                cout<<"TYPE TO ASSIGN: "<<typeVarToBeAssigned<<endl;
+                //cout<<"TYPE TO ASSIGN: "<<typeVarToBeAssigned<<endl;
                 if(typeVarToBeAssigned=="int" || typeVarToBeAssigned=="float"){
                         //change value
                 } else {
@@ -1366,7 +1363,7 @@ exp : exp '+' term
                 string type2=$3->exprType;
                 string resultType="int";
                 string op = "+";
-                cout<<"OPERATOR "<<op<<endl;
+                //cout<<"OPERATOR "<<op<<endl;
                 bool ok=true;
 
                 if (op == "+") {
@@ -1398,7 +1395,7 @@ exp : exp '+' term
                 string type2=$3->exprType;
                 string resultType="int";
                 string op = "-";
-                cout<<"OPERATOR "<<op<<endl;
+                //cout<<"OPERATOR "<<op<<endl;
                 bool ok=true;
 
                 if (op == "-") {
@@ -1429,7 +1426,7 @@ term: term OPERATOR factor
                 string type2=$3->exprType;
                 string resultType="int";
                 string op = string($2);
-                cout<<"OPERATOR "<<op<<endl;
+                //cout<<"OPERATOR "<<op<<endl;
                 bool ok=true;
                 
                 if (op == "*" || op == "/") {
@@ -1471,7 +1468,7 @@ term: term OPERATOR factor
         ;
 factor: '-' factor %prec UMINUS 
         { 
-                cout<<$2->exprType<<" TIPUL ASTA NU E NUMERIC CICA!"<<endl;
+                //cout<<$2->exprType<<" TIPUL ASTA NU E NUMERIC CICA!"<<endl;
                 if ($2->exprType != "int" && $2->exprType != "float") {
                    yyerror("Minus operator ca only be appleid to numeric values!");
                }
@@ -1526,8 +1523,6 @@ expression_elem : class_access { $$ = $1; }
                 }
                 
             int index=atoi($3->getStringValue().c_str());
-            cout<<"COAIE CE PLM E GETSRING VALUE "<<$3->getStringValue()<<endl;
-            cout<<"INDEX RAHHH "<<index<<endl;
             if(var.has_value()){
                 int numberElements = get<1>(var.value());
                 if(index >= numberElements){
@@ -1558,12 +1553,11 @@ expression : exp COMPARE exp
                     yyerror(msg.c_str());
                 }
 
-                cout<<"WHAT THE SIGMA COMPARE "<<string($2)<<endl;
                 $$ = new ASTNode($1, string($2), $3);
                 
                 $$->exprType = "bool";
 
-                cout << "Nod de comparare creat cu tipul: " << $$->exprType << endl;
+                //cout << "Nod de comparare creat cu tipul: " << $$->exprType << endl;
             }
             | exp {$$=$1;}
             ;
@@ -1636,7 +1630,7 @@ do_while_statement: DO '{' main_fun_block '}' WHILE '(' expression ')' ';'
 
 
 main : MAIN_BEGIN main_fun_block MAIN_END {
-        if ($2 == nullptr) cout << "DEBUG: main_fun_block e NULL!" << endl;
+        //if ($2 == nullptr) cout << "DEBUG: main_fun_block e NULL!" << endl;
     $$ = $2;
     };
 

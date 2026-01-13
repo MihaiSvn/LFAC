@@ -29,7 +29,7 @@ bool SymTable::addFunction(const string& funName, const string& funType,const op
     if(functions.find(funName)!=functions.end()){ 
         return false;
     }
-    cout<<"Added fucntion "<<funName<<" of type "<<funType<<" to scope "<<this->name<<endl;
+    //cout<<"Added fucntion "<<funName<<" of type "<<funType<<" to scope "<<this->name<<endl;
 
     functions[funName]=make_tuple(funType,parameters,className);
     return true;
@@ -57,7 +57,7 @@ string SymTable::getType(const string& varName){
 
 
 optional<tuple<string,optional<string>,optional<string>>> SymTable::searchVariable(const string& varName){
-    printf("Searching for variable %s\n",varName.c_str());
+    //printf("Searching for variable %s\n",varName.c_str());
     if(variables.find(varName) != variables.end()){
         return variables[varName];
     }
@@ -68,7 +68,7 @@ optional<tuple<string,optional<string>,optional<string>>> SymTable::searchVariab
 }
 
 optional<tuple<string,int,optional<vector<string>>,optional<string>>> SymTable::searchVector(const string& vecName){
-    printf("Searching for vector %s\n",vecName.c_str());
+    //printf("Searching for vector %s\n",vecName.c_str());
     if (vectors.count(vecName)) {
         return vectors[vecName];
     }
@@ -81,7 +81,7 @@ optional<tuple<string,int,optional<vector<string>>,optional<string>>> SymTable::
 
 optional<tuple<string,optional<vector<string>>,optional<string>>> SymTable::searchFunction(const string& funName){
     auto it=functions.find(funName);
-    cout<<"searched function "<<funName<<" in scope "<<this->name<<endl;
+    //cout<<"searched function "<<funName<<" in scope "<<this->name<<endl;
     if(it!=functions.end()){
         return it->second;  //exista functia, returnam tipul, parametrii si clasa
     }
@@ -94,10 +94,10 @@ optional<tuple<string,optional<vector<string>>,optional<string>>> SymTable::sear
 optional<tuple<string,optional<vector<string>>,optional<string>>> SymTable::searchMethodInClass(const string& className,const string& methodName, SymTable* globalScope){
     
     SymTable* classScope = globalScope->getChildScope(className);
-    cout << "DEBUG: Looking for " << methodName << " in class " << className << endl;
+    //cout << "DEBUG: Looking for " << methodName << " in class " << className << endl;
 if (classScope != nullptr) {
     for (auto const& [key, val] : classScope->functions) {
-        cout << "DEBUG: Found existing method in map: " << key << endl;
+        //cout << "DEBUG: Found existing method in map: " << key << endl;
     }
 }
     if (classScope != nullptr) {
@@ -110,10 +110,10 @@ if (classScope != nullptr) {
 
 optional<tuple<string,optional<string>,optional<string>>> SymTable::searchVariableInClass(const string& className,const string& varName,SymTable* globalScope){
      SymTable* classScope = globalScope->getChildScope(className);
-    cout << "DEBUG: Looking for " << varName << " in class " << className << endl;
+    //cout << "DEBUG: Looking for " << varName << " in class " << className << endl;
 if (classScope != nullptr) {
     for (auto const& [key, val] : classScope->functions) {
-        cout << "DEBUG: Found existing method in map: " << key << endl;
+        //cout << "DEBUG: Found existing method in map: " << key << endl;
     }
 }
     if (classScope != nullptr) {
@@ -125,10 +125,10 @@ if (classScope != nullptr) {
 }
 optional<tuple<string,int,optional<vector<string>>,optional<string>>> SymTable::searchVectorInClass(const string& className,const string& varName,SymTable* globalScope){
      SymTable* classScope = globalScope->getChildScope(className);
-    cout << "DEBUG: Looking for " << varName << " in class " << className << endl;
+    //cout << "DEBUG: Looking for " << varName << " in class " << className << endl;
 if (classScope != nullptr) {
     for (auto const& [key, val] : classScope->functions) {
-        cout << "DEBUG: Found existing method in map: " << key << endl;
+        //cout << "DEBUG: Found existing method in map: " << key << endl;
     }
 }
     if (classScope != nullptr) {
@@ -141,7 +141,7 @@ if (classScope != nullptr) {
 
 
 bool SymTable::updateVarValue(const string& varName, const string& newValue){
-    cout<<"UPDATEZ VARIABILA "<<varName<<" CU VALOAREA "<<newValue<<endl;
+    //cout<<"UPDATEZ VARIABILA "<<varName<<" CU VALOAREA "<<newValue<<endl;
     if (variables.find(varName) != variables.end()) {
         get<1>(variables[varName]) = newValue;
         return true;
@@ -156,7 +156,7 @@ bool SymTable::updateVarValue(const string& varName, const string& newValue){
 
 bool SymTable::updateVarValueInClass(const string& className,const string& varName, const string&varType, const string& newValue,SymTable* globalScope){
 
-    cout<<"ACTUALIZEZ VARIABILA DIN CLASA EHHH"<<endl;
+    //cout<<"ACTUALIZEZ VARIABILA DIN CLASA EHHH"<<endl;
     SymTable* classScope = globalScope->getChildScope(className);
     
     if (classScope == nullptr) {
@@ -178,7 +178,7 @@ bool SymTable::updateVarValueInClass(const string& className,const string& varNa
 }
 
 bool SymTable::updateVectorElement(const string& vecName, int idx, const string& newValue) {
-    cout<<"ACTUALIZEZ VECTOR EHHH"<<endl;
+    //cout<<"ACTUALIZEZ VECTOR EHHH"<<endl;
     if (vectors.count(vecName)) {
         auto& [tip, marime, dateVector, clasa] = vectors[vecName];
         
@@ -233,7 +233,7 @@ bool SymTable::setFunctionParams(const string& funName, const string& varType){
     if(!fun.has_value()){  //nu exista
         return false;
     }
-    cout<<"placing variable of type "<<varType<<" in function "<<funName<<" in scope "<<this->name<<endl;
+    //cout<<"placing variable of type "<<varType<<" in function "<<funName<<" in scope "<<this->name<<endl;
     auto [tip,params,clasa] = fun.value();
     if(params.has_value()){
         auto& prm = params.value();
@@ -248,7 +248,7 @@ bool SymTable::setFunctionParams(const string& funName, const string& varType){
 }
 
 bool SymTable::verifParamType(const string& funName, int nr_param, const string& paramType){
-    cout<<"searching the param type of function "<<funName<<" at index "<<nr_param<<" and comparing with with the type "<<paramType<<endl;
+    //cout<<"searching the param type of function "<<funName<<" at index "<<nr_param<<" and comparing with with the type "<<paramType<<endl;
     auto fun = searchFunction(funName);
     if(!fun.has_value()){
         return false;
@@ -308,7 +308,7 @@ SymTable* SymTable::getChildScope(const string& scopeName){
 
 
 SymTable* SymTable::enterScope(const string& newScopeName){
-    printf("Entering scope: %s\n",newScopeName.c_str());
+    //printf("Entering scope: %s\n",newScopeName.c_str());
     SymTable* newScope = new SymTable(newScopeName,this);
     childScopes.push_back(newScope);
     return newScope;
@@ -316,11 +316,11 @@ SymTable* SymTable::enterScope(const string& newScopeName){
 
 SymTable* SymTable::exitScope(){
     if (this->parentScope == nullptr) {
-        printf("CRITICAL ERROR: Trying to exit Global Scope!\n");
+        //printf("CRITICAL ERROR: Trying to exit Global Scope!\n");
         return this; 
     }
-    printf("Exiting scope [%s], returning to [%s]\n", 
-            this->name.c_str(), this->parentScope->name.c_str());
+    //printf("Exiting scope [%s], returning to [%s]\n", 
+    //        this->name.c_str(), this->parentScope->name.c_str());
     return this->parentScope;
 }
 
