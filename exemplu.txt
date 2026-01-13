@@ -6,6 +6,7 @@ class MyClass
         int a=10;
         float b;
         bool x;
+        int ps=23;
         int sir[10];
 
     class_methods_section
@@ -14,6 +15,7 @@ class MyClass
             bool penis;
             c=12;
             ds=false;
+            ps=0;
             return 14;
         }
         bool print(){
@@ -46,6 +48,14 @@ global_var_section
 
     bool egal_check=false;
 
+    int x,y,rezultat;
+    int n,rez;
+
+    int v[10] = {2, 5, 8, 12, 16, 23, 38, 56, 72, 91};
+    int cautat=23;
+    int index;
+    int mijloc;
+    int sir[10] = {56, 2, 38, 12, 91, 8, 72, 5, 23, 16};
 global_fun_section
     bool check(int s,int p)
     {
@@ -70,20 +80,161 @@ global_fun_section
 
     }
     int inc(int a){
-        int A=a+1;
+        auto A=a+1;
+        if(A<10){
+            Print(A);
+            inc(A);
+        }
         return A;
     }
+    int wow(){
+        egal_check=true;
+    }
+    int cmmdc(int a, int b) {
+        if (a == 0) {
+            return b;
+        }
+        
+        while (b != 0) {
+            if (a > b) {
+                a = a - b;
+            } else {
+                b = b - a;
+            }
+        }
+        
+        return a;
+    }
+    int factorial(int n) {
+        if (n == 0) {
+            return 1;
+        }
+        
+        // n * factorial(n - 1)
+        auto rez_mic = factorial(n - 1);
+        return n * rez_mic;
+    }
+
+    
+    int cautareBinar(int st, int dr, int x) {
+        int mijloc;
+        Print("STANGA");
+        Print(st);
+        Print("DREAPTA");
+        Print(dr);
+        Print("VECTORRRRR");
+        Print(v[4]);
+        if (dr >= st) {
+            mijloc = st + (dr - st) / 2;
+            Print("MIJLOC ESTE");
+            Print(mijloc);
+
+            // Daca elementul este la mijloc
+            Print("V MIJLOC");
+            Print(v[mijloc]);
+            if (v[mijloc] == x) {
+                return mijloc;
+            }
+
+            // Daca elementul e mai mic decat mijlocul, cautam in stanga
+            if (v[mijloc] > x) {
+                return cautareBinar(st, mijloc - 1, x);
+            }
+
+            // Altfel, cautam in dreapta
+            return cautareBinar(mijloc + 1, dr, x);
+        }
+
+        // Elementul nu exista
+        return -1;
+    }
+
+    bool verifica_0(int a){
+        if(a==0){
+            return true;
+        }
+        return false;
+    }
+    bool verifEgal(int a,int b, int c){
+        Print("a");
+        Print(a);
+        Print("b");
+        Print(b);
+        Print("c");
+        Print(c);
+        if(verifica_0(a)==false){
+            Print("NU E ZEROOO BA");
+        }
+        return (a==b) && (b==c);
+        
+    }
+
+    int bubbleSort(int lungime) {
+        int i;
+        int j;
+        int temp;
+        
+        for (i = 0; i < lungime - 1; i++) {
+            for (j = 0; j < lungime - i - 1; j++) {
+                // Dacă elementul curent e mai mare decât următorul, le inversăm
+                if (sir[j] > sir[j + 1]) {
+                    temp = sir[j];
+                    sir[j] = sir[j + 1];
+                    sir[j + 1] = temp;
+                }
+            }
+        }
+        return 1;
+    }
+
+    int printVector(int lungime) {
+        int i;
+        for(i = 0; i < lungime; i++) {
+            Print(sir[i]);
+        }
+        return 1;
+    }
+
 
 main
+/*
 
-//Print(a);
-a=0;
-//Print(inc(inc(a)));
+ x = 48;
+     y = 18;
+     rezultat = cmmdc(x, y);
+    
+    Print("CMMDC pentru 48 si 18 este:");
+    Print(rezultat);
 
-MyClass idk= new MyClass();
+    n=5;
+    rez=factorial(n);
 
-do{
-    Print(a);
-    a++;
-} while(a<10);
+    Print("Factorial de 5 este:");
+    Print(rez);
+
+
+Print(verifica_0(0));
+cautat=23;
+    index = cautareBinar(0, 9, 23);
+    
+    if (index != -1) {
+        Print("Elementul a fost gasit la indexul:");
+        Print(index);
+    } else {
+        Print("Elementul nu exista in vector.");
+    }
+
+*/
+
+
+Print("Vectorul inainte de sortare:");
+    Print("VEC INITIAL WHOOOO");
+    printVector(n);
+
+    bubbleSort(n);
+
+    Print("Vectorul dupa sortare:");
+    printVector(n);
+
+//egal=verifEgal(1,1,1);
 end_main

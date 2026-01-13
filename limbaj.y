@@ -53,7 +53,7 @@ string current_init_vec_name;
         class ASTNode* node;
         vector<string>* idList;
 }
-%token <stringVal>TYPE CLASS_SECTION CLASS_VAR_SECTION CLASS_METHODS_SECTION CLASS GVAR_SECTION GFUN_SECTION NEW ASSIGN IF ELSE WHILE FOR DO COMPARE <stringVal>ID <intVal>INT <boolVal>BOOL <floatVal>FLOAT <stringVal>STRING <charVal>CHAR PRINT MAIN_BEGIN MAIN_END <stringVal>OPERATOR INC DEC NOT RETURN
+%token <stringVal>TYPE CLASS_SECTION CLASS_VAR_SECTION CLASS_METHODS_SECTION CLASS GVAR_SECTION GFUN_SECTION NEW ASSIGN IF ELSE WHILE FOR DO COMPARE <stringVal>ID <intVal>INT <boolVal>BOOL <floatVal>FLOAT <stringVal>STRING <charVal>CHAR AUTO PRINT MAIN_BEGIN MAIN_END <stringVal>OPERATOR INC DEC NOT RETURN
 
 
 %type <node> expression expression_elem statement if_statement while_statement factor term exp for_assign for_statement do_while_statement
@@ -195,7 +195,7 @@ class_access : class_method_call
                                 string msg="the class instance "+string($1)+" doesn't exist";
                                 yyerror(msg.c_str());
                         }
-                        if(currentScope->classExists(currentScope->getType($1))==false){ //daca tipul este o clasa existenta, ca sa nu pot face int.ceva
+                        if(globalScope->classExists(currentScope->getType($1))==false){ //daca tipul este o clasa existenta, ca sa nu pot face int.ceva
                                 string msg="the variable "+string($1)+"isn't a class instance";
                                 yyerror(msg.c_str());
                         }
@@ -209,7 +209,7 @@ class_access : class_method_call
                         if(clasa.has_value()){  //daca este o variabila de clasa
                                 string cls = clasa.value();
                                 if(cls!=classType){
-                                        string msg="the variable"+string($3)+"is in a different class";
+                                        string msg="the variable "+string($3)+"is in a different class";
                                         yyerror(msg.c_str());
                                 } else {
                                 }
@@ -224,17 +224,22 @@ class_access : class_method_call
                 $$ = new ASTNode("id", fullName, typeMember);           
                 
             }
-            | ID '.' ID '[' INT ']'
+            | ID '.' ID '[' expression ']'
             {
                 if(currentScope->searchVariable($1)==nullopt){
                                 string msg="the class instance "+string($1)+" doesn't exist";
                                 yyerror(msg.c_str());
                         }
-                        if(currentScope->classExists(currentScope->getType($1))==false){ //daca tipul este o clasa existenta, ca sa nu pot face int.ceva
+                        if(globalScope->classExists(currentScope->getType($1))==false){ //daca tipul este o clasa existenta, ca sa nu pot face int.ceva
                                 string msg="the variable "+string($1)+"isn't a class instance";
                                 yyerror(msg.c_str());
                         }
 
+                if($5->exprType!="int"){
+                        string msg="Used a non-int variable for index of vector "+string($3);
+                        yyerror(msg.c_str());
+                }
+                int index=atoi($5->getStringValue().c_str());
                 string classType = currentScope->getType($1);
                 auto var=currentScope->searchVectorInClass(classType,$3,globalScope);
                 string typevec;
@@ -242,7 +247,7 @@ class_access : class_method_call
                         auto [tip,numberElements,valori,clasa] = var.value();
                         typevec=tip;
 
-                        if($5 >= numberElements || $5 < 0){
+                        if(index >= numberElements || index < 0){
                         yyerror("Vector index out of bounds!");
                         }
 
@@ -255,12 +260,12 @@ class_access : class_method_call
                        
                         if(clasa.has_value()){  //daca este o variabila de clasa
                                 string cls = clasa.value();
-                                 if($5>=numberElements){
-                                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                                 if(index>=numberElements){
+                                        string msg = "Tried accesing vector index "+ to_string(index) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
                                         yyerror(msg.c_str());
                                 }
-                                if($5<0){
-                                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the index can't be negative!)";
+                                if(index<0){
+                                        string msg = "Tried accesing vector index "+ to_string(index) +" that doens't exist (the index can't be negative!)";
                                         yyerror(msg.c_str());
                                 }
                                 if(cls!=classType){
@@ -277,8 +282,7 @@ class_access : class_method_call
                 string fullVecName = string($1) + "." + string($3);
 
                 ASTNode* vecNode = new ASTNode("id", fullVecName, typevec);
-                ASTNode* indexNode = new ASTNode("int", to_string($5), "int");
-                $$ = new ASTNode(vecNode, "[]", indexNode);
+                $$ = new ASTNode(vecNode, "[]", $5);
 
         
                 
@@ -485,7 +489,7 @@ class_var_call : ID '.' ID ASSIGN expression
 
                 $$ = new ASTNode(nod,":=",minus);
             }
-            | ID '.' ID '[' INT ']' ASSIGN expression
+            | ID '.' ID '[' expression ']' ASSIGN expression
                 {
                 auto varObj = currentScope->searchVariable($1);
                 if (!varObj.has_value()) {
@@ -493,15 +497,20 @@ class_var_call : ID '.' ID ASSIGN expression
                         yyerror(msg.c_str());
                 }
                 string className = currentScope->getType($1);
+                if($5->exprType!="int"){
+                        string msg="Used a non-int variable for index of vector "+string($3);
+                        yyerror(msg.c_str());
+                }
+                int index=atoi($5->getStringValue().c_str());
                 auto var = currentScope->searchVectorInClass(className, $3, globalScope);
                 if(var.has_value()) {
                 int numberElements = get<1>(var.value());
-                if($5>=numberElements){
-                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                if(index>=numberElements){
+                        string msg = "Tried accesing vector index "+ to_string(index) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
                         yyerror(msg.c_str());
                 }
-                if($5<0){
-                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the index can't be negative!)";
+                if(index<0){
+                        string msg = "Tried accesing vector index "+ to_string(index) +" that doens't exist (the index can't be negative!)";
                         yyerror(msg.c_str());
                 }
 
@@ -512,22 +521,21 @@ class_var_call : ID '.' ID ASSIGN expression
                         string msg = "Cannot assign [" + exprType + "] to member '" + string($1) + "." + string($3) + "' of type [" + memberType + "]";
                         yyerror(msg.c_str());
                         }
-                        currentScope->updateVectorElement(string($1)+'.'+string($3), $5 , $8->getStringValue());
+                        currentScope->updateVectorElement(string($1)+'.'+string($3), index , $8->getStringValue());
 
                         string fullVecName = string($1) + "." + string($3);
         
                         ASTNode* vectorNode = new ASTNode("id_vector", fullVecName, memberType);
                         
-                        ASTNode* indexNode = new ASTNode("int", to_string($5), "int");
 
-                        ASTNode* vectorAccess = new ASTNode(vectorNode, "[]", indexNode);
+                        ASTNode* vectorAccess = new ASTNode(vectorNode, "[]", $5);
                         vectorAccess->exprType = memberType;
 
                         $$ = new ASTNode(vectorAccess, ":=", $8);
                 }
                 
                 }
-            | ID '.' ID '[' INT ']' INC
+            | ID '.' ID '[' expression ']' INC
             {
                 auto varObj = currentScope->searchVariable($1);
                 if (!varObj.has_value()) {
@@ -536,15 +544,19 @@ class_var_call : ID '.' ID ASSIGN expression
                 }
                 string className = currentScope->getType($1);
                 auto var = currentScope->searchVectorInClass(className, $3, globalScope);
-                
-                if(var.has_value()) {
-                 int numberElements = get<1>(var.value());
-                if($5>=numberElements){
-                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                if($5->exprType!="int"){
+                        string msg="Used a non-int variable for index of vector "+string($3);
                         yyerror(msg.c_str());
                 }
-                if($5<0){
-                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the index can't be negative!)";
+                int index=atoi($5->getStringValue().c_str());
+                if(var.has_value()) {
+                 int numberElements = get<1>(var.value());
+                if(index>=numberElements){
+                        string msg = "Tried accesing vector index "+ to_string(index) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                        yyerror(msg.c_str());
+                }
+                if(index<0){
+                        string msg = "Tried accesing vector index "+ to_string(index) +" that doens't exist (the index can't be negative!)";
                         yyerror(msg.c_str());
                 }
                 string memberType = std::get<0>(var.value());
@@ -557,13 +569,11 @@ class_var_call : ID '.' ID ASSIGN expression
                 string fullName = string($1) + "." + string($3);
 
                 ASTNode* destVecName = new ASTNode("id", fullName, memberType);
-                ASTNode* destIndex = new ASTNode("int", to_string($5), "int");
-                ASTNode* vectorDest = new ASTNode(destVecName, "[]", destIndex);
+                ASTNode* vectorDest = new ASTNode(destVecName, "[]", $5);
 
                 
                 ASTNode* readVecName = new ASTNode("id", fullName, memberType);
-                ASTNode* readIndex = new ASTNode("int", to_string($5), "int");
-                ASTNode* vectorRead = new ASTNode(readVecName, "[]", readIndex);
+                ASTNode* vectorRead = new ASTNode(readVecName, "[]", $5);
 
                
                 ASTNode* unu = new ASTNode("int", "1", "int");
@@ -579,7 +589,7 @@ class_var_call : ID '.' ID ASSIGN expression
 
                 
             }
-            | ID '.' ID '[' INT ']' DEC
+            | ID '.' ID '[' expression ']' DEC
             {
                 auto varObj = currentScope->searchVariable($1);
                 if (!varObj.has_value()) {
@@ -589,14 +599,20 @@ class_var_call : ID '.' ID ASSIGN expression
                 string className = currentScope->getType($1);
                 auto var = currentScope->searchVectorInClass(className, $3, globalScope);
                 
-                if(var.has_value()) {
-                 int numberElements = get<1>(var.value());
-                if($5>=numberElements){
-                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                if($5->exprType!="int"){
+                        string msg="Used a non-int variable for index of vector "+string($3);
                         yyerror(msg.c_str());
                 }
-                if($5<0){
-                        string msg = "Tried accesing vector index "+ to_string($5) +" that doens't exist (the index can't be negative!)";
+                int index=atoi($5->getStringValue().c_str());
+                
+                if(var.has_value()) {
+                 int numberElements = get<1>(var.value());
+                if(index>=numberElements){
+                        string msg = "Tried accesing vector index "+ to_string(index) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                        yyerror(msg.c_str());
+                }
+                if(index<0){
+                        string msg = "Tried accesing vector index "+ to_string(index) +" that doens't exist (the index can't be negative!)";
                         yyerror(msg.c_str());
                 }
                 string memberType = std::get<0>(var.value());
@@ -609,13 +625,11 @@ class_var_call : ID '.' ID ASSIGN expression
                 string fullName = string($1) + "." + string($3);
 
                 ASTNode* destVecName = new ASTNode("id", fullName, memberType);
-                ASTNode* destIndex = new ASTNode("int", to_string($5), "int");
-                ASTNode* vectorDest = new ASTNode(destVecName, "[]", destIndex);
+                ASTNode* vectorDest = new ASTNode(destVecName, "[]", $5);
 
                 
                 ASTNode* readVecName = new ASTNode("id", fullName, memberType);
-                ASTNode* readIndex = new ASTNode("int", to_string($5), "int");
-                ASTNode* vectorRead = new ASTNode(readVecName, "[]", readIndex);
+                ASTNode* vectorRead = new ASTNode(readVecName, "[]", $5);
 
                
                 ASTNode* unu = new ASTNode("int", "1", "int");
@@ -653,7 +667,7 @@ var_decl : TYPE ID
                   auto& classes = globalScope->classes;
                   if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
                      className = parentName;
-                        cout<<"added function "<<$2<<" to class "<<parentName<<endl;
+                        cout<<"added variable "<<$2<<" to class "<<parentName<<endl;
                   }
                 }
                 if(currentScope->addVariable($2,$1,nullopt,className)){
@@ -727,7 +741,7 @@ var_decl : TYPE ID
                   auto& classes = globalScope->classes;
                   if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
                      className = parentName;
-                        cout<<"added function "<<$2<<" to class "<<parentName<<endl;
+                        cout<<"added var "<<$2<<" to class "<<parentName<<endl;
                   }
                 }
                 if(currentScope->addVariable($2,$1,nullopt,className)){
@@ -753,7 +767,35 @@ var_decl : TYPE ID
                 ASTNode* varNode = new ASTNode("id", $2, $1);
                 $$ = new ASTNode(varNode, ":=", $5);
              }
-             | TYPE ID '[' INT ']'
+            | AUTO ID ASSIGN expression
+            {
+                optional<string> className = nullopt;
+
+               if(currentScope != nullptr && currentScope->parentScope != nullptr) {
+                  string parentName = currentScope->name;
+            
+                  auto& classes = globalScope->classes;
+                  if(find(classes.begin(), classes.end(), parentName) != classes.end()) {
+                     className = parentName;
+                        cout<<"added var "<<$2<<" to class "<<parentName<<endl;
+                  }
+                }
+
+                string tip=$4->exprType;
+                cout<<"TIPUL PE CARE IL VA LUA AUTO UL MEU ESTE "<<tip<<endl;
+                if(currentScope->addVariable($2,tip.c_str(),nullopt,className)){
+                        currentVarName= $2;
+                        currentVarType = (char*)tip.c_str();
+                } else {
+                        string msg="Variable "+string($2) + " already declared!";
+                        yyerror(msg.c_str());
+                }   
+                
+                ASTNode* varNode = new ASTNode("id", $2, tip);
+                $$ = new ASTNode(varNode, ":=", $4);
+            }
+        
+             | TYPE ID '[' expression ']'
              {
                  optional<string> className = nullopt;
 
@@ -766,7 +808,11 @@ var_decl : TYPE ID
                         cout<<"added Vector "<<$2<<" to class "<<parentName<<endl;
                   }
                 }
-                if(currentScope->addVector($2,$1,$4,nullopt,className)){
+                if($4->exprType!="int"){
+                        string msg="Used a non-int variable for index of vector "+string($2);
+                        yyerror(msg.c_str());
+                }
+                if(currentScope->addVector($2,$1,atoi($4->getStringValue().c_str()),nullopt,className)){
                         currentVarName= $2;
                         currentVarType = $1;
                 } else {
@@ -774,12 +820,26 @@ var_decl : TYPE ID
                         yyerror(msg.c_str());
                 }
                 ASTNode* rootBlock = nullptr;
-                string defaultValue = "0";
+                string defaultValue;
+                string typeStr = string($1);
 
-                for (int i = 0; i < $4; i++) {
-                        ASTNode* indexNode = new ASTNode("int", to_string(i), "int");
+                if (typeStr == "int") {
+                        defaultValue = "0";
+                } else if (typeStr == "float") {
+                        defaultValue = "0.0";
+                } else if (typeStr == "bool") {
+                        defaultValue = "false";
+                } else if (typeStr == "char") {
+                        defaultValue = " ";
+                } else if (typeStr == "string") {
+                        defaultValue = "";
+                } else {
+                        defaultValue = "0";
+                }
+
+                for (int i = 0; i < atoi($4->getStringValue().c_str()); i++) {
                         ASTNode* vecNode = new ASTNode("id_vector", $2, $1);
-                        ASTNode* access = new ASTNode(vecNode, "[]", indexNode);
+                        ASTNode* access = new ASTNode(vecNode, "[]", $4);
                         
                         ASTNode* zero = new ASTNode($1, defaultValue, $1);
                         
@@ -794,7 +854,7 @@ var_decl : TYPE ID
                 $$ = rootBlock;
 
              }
-             | TYPE ID '[' INT ']' ASSIGN
+             | TYPE ID '[' expression ']' ASSIGN
              {
                 current_init_index=0;
                  optional<string> className = nullopt;
@@ -808,7 +868,11 @@ var_decl : TYPE ID
                         cout<<"added Vector "<<$2<<" to class "<<parentName<<endl;
                   }
                 }
-                numberOfElementsToAdd=$4;
+                if($4->exprType!="int"){
+                        string msg="Used a non-int variable for index of vector "+string($2);
+                        yyerror(msg.c_str());
+                }
+                numberOfElementsToAdd=atoi($4->getStringValue().c_str());
                 if(currentScope->addVector($2,$1,numberOfElementsToAdd,nullopt,className)){
                         currentVarName= $2;
                         currentVarType = $1;
@@ -817,7 +881,7 @@ var_decl : TYPE ID
                         yyerror(msg.c_str());
                 }
                 current_init_vec_name=string($2);
-                numberOfElementsToAdd=$4;
+                numberOfElementsToAdd=atoi($4->getStringValue().c_str());
                 cout<<"NUMBER OF ELEMENTS TO ADD "<<numberOfElementsToAdd<<endl;
              }
               '{' vector_elements '}'
@@ -1036,7 +1100,7 @@ fun_call_params : {$$=nullptr;}
                 param_counts.top()++;
                 $$ = new ASTNode($1, "ARG", nullptr);
             }
-            | expression ','
+            | expression ',' fun_call_params
             {
                 string c_fun = calling_functions.top();
                 int c_idx = param_counts.top();
@@ -1044,11 +1108,8 @@ fun_call_params : {$$=nullptr;}
                      yyerror("Type mismatch");
                 }
                 param_counts.top()++;
-                $<node>$ = $1;
-            }
-            fun_call_params
-            {
-                $$ = new ASTNode($<node>3, "ARG", $4);
+                $$ = new ASTNode($1, "ARG", $3);
+
             }
             ;
 
@@ -1138,17 +1199,22 @@ statement: ID ASSIGN expression
                 
                 $$ = new ASTNode(dest, ":=", minus);
         }
-        | ID '[' INT ']' ASSIGN
+        | ID '[' expression ']' ASSIGN
         {
                 auto var=currentScope->searchVector($1);
+                if($3->exprType!="int"){
+                        string msg="Used a non-int variable for index of vector "+string($1);
+                        yyerror(msg.c_str());
+                }
+                int index=atoi($3->getStringValue().c_str());
                 if(var.has_value()){
                         int numberElements= get<1>(var.value());
-                        if($3>=numberElements){
-                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                        if(index>=numberElements){
+                        string msg = "Tried accesing vector index "+ to_string(index) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
                         yyerror(msg.c_str());
                         }
-                          if($3<0){
-                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the index can't be negative!)";
+                          if(index<0){
+                        string msg = "Tried accesing vector index "+ to_string(index) +" that doens't exist (the index can't be negative!)";
                         yyerror(msg.c_str());
                         }
                 }
@@ -1160,26 +1226,31 @@ statement: ID ASSIGN expression
          expression {
                 string typeVarToBeAssigned=currentScope->getType($1);
                 string type = $7->exprType;
+                int index=atoi($3->getStringValue().c_str());
                 if(typeVarToBeAssigned!=type){
                         string msg="Type mismatch at assignment, trying operation on ["+typeVarToBeAssigned+"] and ["+type+"]";
                         yyerror(msg.c_str());
                 }
                 ASTNode* vecName = new ASTNode("id_vector", $1, typeVarToBeAssigned);
-                ASTNode* indexNode = new ASTNode("int", to_string($3), "int");
-                ASTNode* access = new ASTNode(vecName, "[]", indexNode);
+                ASTNode* access = new ASTNode(vecName, "[]", $3);
                 $$ = new ASTNode(access, ":=", $7);
          }
-        | ID '[' INT ']' INC
+        | ID '[' expression ']' INC
         {
                 auto var=currentScope->searchVector($1);
+                if($3->exprType!="int"){
+                        string msg="Used a non-int variable for index of vector "+string($1);
+                        yyerror(msg.c_str());
+                }
+                int index=atoi($3->getStringValue().c_str());
                 if(var.has_value()){
                         int numberElements= get<1>(var.value());
-                        if($3>=numberElements){
-                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                        if(index>=numberElements){
+                        string msg = "Tried accesing vector index "+ to_string(index) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
                         yyerror(msg.c_str());
                         }
-                          if($3<0){
-                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the index can't be negative!)";
+                          if(index<0){
+                        string msg = "Tried accesing vector index "+ to_string(index) +" that doens't exist (the index can't be negative!)";
                         yyerror(msg.c_str());
                         }
                 }
@@ -1197,24 +1268,28 @@ statement: ID ASSIGN expression
                 }
 
                 ASTNode* vecName = new ASTNode("id_vector", $1, typeVarToBeAssigned);
-                ASTNode* indexNode = new ASTNode("int", to_string($3), "int");
-                ASTNode* access = new ASTNode(vecName, "[]", indexNode);
+                ASTNode* access = new ASTNode(vecName, "[]", $3);
                 ASTNode* unu = new ASTNode("int", "1", "int");
                 ASTNode* plus = new ASTNode(access, "+", unu);
                 
                 $$ = new ASTNode(access, ":=", plus);
         }
-        | ID '[' INT ']' DEC
+        | ID '[' expression ']' DEC
         {
                 auto var=currentScope->searchVector($1);
+                if($3->exprType!="int"){
+                        string msg="Used a non-int variable for index of vector "+string($1);
+                        yyerror(msg.c_str());
+                }
+                int index=atoi($3->getStringValue().c_str());
                 if(var.has_value()){
                         int numberElements= get<1>(var.value());
-                        if($3>=numberElements){
-                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
+                        if(index>=numberElements){
+                        string msg = "Tried accesing vector index "+ to_string(index) +" that doens't exist (the maximum elements for the vector is "+to_string(numberElements-1)+")";
                         yyerror(msg.c_str());
                         }
-                          if($3<0){
-                        string msg = "Tried accesing vector index "+ to_string($3) +" that doens't exist (the index can't be negative!)";
+                          if(index<0){
+                        string msg = "Tried accesing vector index "+ to_string(index) +" that doens't exist (the index can't be negative!)";
                         yyerror(msg.c_str());
                         }
                 }
@@ -1231,8 +1306,7 @@ statement: ID ASSIGN expression
                         yyerror(msg.c_str());
                 }
                 ASTNode* vecName = new ASTNode("id_vector", $1, typeVarToBeAssigned);
-                ASTNode* indexNode = new ASTNode("int", to_string($3), "int");
-                ASTNode* access = new ASTNode(vecName, "[]", indexNode);
+                ASTNode* access = new ASTNode(vecName, "[]", $3);
                 ASTNode* unu = new ASTNode("int", "1", "int");
                 ASTNode* minus = new ASTNode(access, "-", unu);
                 
@@ -1398,16 +1472,24 @@ expression_elem : class_access { $$ = $1; }
             }
             $$ = new ASTNode("id", $1, currentScope->getType($1));
         }
-        | ID '[' INT ']'
+        | ID '[' expression ']'
         {
             auto var = currentScope->searchVector($1);
+            if($3->exprType!="int"){
+                        string msg="Used a non-int variable for index of vector "+string($1);
+                        yyerror(msg.c_str());
+                }
+                
+            int index=atoi($3->getStringValue().c_str());
+            cout<<"COAIE CE PLM E GETSRING VALUE "<<$3->getStringValue()<<endl;
+            cout<<"INDEX RAHHH "<<index<<endl;
             if(var.has_value()){
                 int numberElements = get<1>(var.value());
-                if($3 >= numberElements){
-                    string msg = "Tried accessing vector index " + to_string($3) + " that doesn't exist (max is " + to_string(numberElements-1) + ")";
+                if(index >= numberElements){
+                    string msg = "Tried accessing vector index " + to_string(index) + " that doesn't exist (max is " + to_string(numberElements-1) + ")";
                     yyerror(msg.c_str());
                 }
-                if($3 < 0){
+                if(index < 0){
                     yyerror("Vector index can't be negative!");
                 }
             } else {
@@ -1416,8 +1498,7 @@ expression_elem : class_access { $$ = $1; }
             }
             
             ASTNode* vecName = new ASTNode("id_vector", $1, currentScope->getType($1));
-            ASTNode* indexNode = new ASTNode("int", to_string($3), "int");
-            $$ = new ASTNode(vecName, "[]", indexNode);
+            $$ = new ASTNode(vecName, "[]", $3);
         }
        
         ;

@@ -1,5 +1,8 @@
 #include "AST.h"
 #include "SymTable.h"
+
+extern SymTable* globalScope;
+
 ASTNode::ASTNode(string type, string value, string exprType){
     this->left=nullptr;
     this->right=nullptr;
@@ -121,9 +124,15 @@ int ASTNode::compareNodes(ASTNode* L, ASTNode* R) {
 }
 
 ASTNode* ASTNode::evaluate(SymTable* currentScope){
+
+    if (this == nullptr) return nullptr;
+
     cout << "Evaluate nod: " << label << " | Type: " << this->type << endl;
 
-    if (label == "BLOCK") {
+    if (label == "ARG") {
+        return left->evaluate(currentScope);
+    }
+    else if (label == "BLOCK") {
         ASTNode* lastResult = nullptr;
 
         if (this->left != nullptr) {
@@ -145,14 +154,14 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
     }
     else if (label=="CALL"){
             string fun_id = left->label;
-            vector<string> names = currentScope->getParamNames(fun_id);
-            ASTNode* body = currentScope->getFunctionBody(fun_id);
+            vector<string> names = globalScope->getParamNames(fun_id);
+            ASTNode* body = globalScope->getFunctionBody(fun_id);
 
             if (!body) {
                 return new ASTNode("error", "Function body not found", "error");
             }
 
-            SymTable* funcExecScope = new SymTable(fun_id + "_exec", currentScope);
+            SymTable* funcExecScope = new SymTable(fun_id + "_exec", globalScope);
 
             ASTNode* pointer= this->right;
             //structura parametrii e nod entral ARG, nod stanga expresie, nod dreapta alt ARG, si asa mai departe
@@ -160,9 +169,15 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                 if(pointer==nullptr)
                     break;
                 ASTNode* evalArg=pointer->left->evaluate(currentScope);
+
+                cout << "--- DEBUG CALL ---" << endl;
+                cout << "Nume Parametru: " << names[i] << endl;
+                cout << "Tip Nod Evaluat: " << evalArg->type << endl; // 0=int, 5=id, etc.
+                cout << "Label Evaluat: " << evalArg->label << endl;
+                cout << "Valoare String: " << evalArg->getStringValue() << endl;
+
                 
-                funcExecScope->addVariable(names[i], evalArg->exprType);
-                funcExecScope->updateVarValue(names[i], evalArg->getStringValue());
+                funcExecScope->addVariable(names[i], evalArg->exprType,evalArg->getStringValue());
 
                 auto [tip,valoare,clasa]=funcExecScope->variables[names[i]];
 
@@ -172,7 +187,7 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
             }
             cout<<"EXECUTING FUNCTION "<<fun_id<<endl;
 
-            body->printAST(0);
+            //body->printAST(0);
             ASTNode* rez=body->evaluate(funcExecScope);
             cout<<"TAGUL LA REZ ESTEEEE "<<rez->label<<endl;
 
@@ -414,7 +429,10 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
             return new ASTNode("error", "Type mismatch", "error");
         }
         else if(label=="/"){
-            if (R->value.fVal == 0 || R->value.iVal == 0) return new ASTNode("error", "Div by zero", "error");
+            if (R->type == astINT && R->value.iVal == 0) 
+                return new ASTNode("error", "Div by zero", "error");
+            if (R->type == astFL && R->value.fVal == 0.0) 
+                return new ASTNode("error", "Div by zero", "error");
             if (L->type == astINT && R->type == astINT) return new ASTNode("int", to_string(L->value.iVal / R->value.iVal), "int");
             if (L->type ==astFL && R->type==astFL) return new ASTNode("float", to_string(L->value.fVal / R->value.fVal), "float");
             return new ASTNode("error", "Type mismatch", "error");
@@ -460,6 +478,8 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                 return new ASTNode("error", "Type mismatch", "error");
             }
             int idx=index->value.iVal;
+
+            cout << "DEBUG VECTOR: Accesam indexul real: " << idx << endl;
             
             string numeRealVector = this->left->label;
 
@@ -548,9 +568,14 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                 cout<<"FULL VECTOR NAMGE IN ASIGNARE MORTII MEI "<<fullVecName<<endl;
 
                 auto var = currentScope->searchVector(fullVecName);
-                if (!var.has_value()) {
-                    cout << "EROARE: Vectorul " << fullVecName << " nu a fost gasit in tabel!" << endl;
-                    return new ASTNode("error", "Vector not found", "error");
+                if (currentScope->vectors.find(fullVecName) == currentScope->vectors.end()) {
+                    cout<<"mancatias sufletul is aici "<<endl;
+                    string vType = left->left->exprType;
+                    int sizeToAllocate = (idx>100) ? idx + 1 : 100;
+                    currentScope->addVector(fullVecName,vType,sizeToAllocate);
+
+                    cout << "RUNTIME: Vector " << fullVecName << " created on the fly in scope " 
+                 << currentScope->name << " with size " << sizeToAllocate << endl;
                 }
 
                 bool succes = currentScope->updateVectorElement(fullVecName, idx, rezultat->getStringValue());
@@ -569,59 +594,8 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
 
         
         //in stanga numele functiei, in dreapta ARG care in stanga are argument, dreapta alt ARG
-        else if (label == "CALL") {
-            string fName = left->label;
-            vector<string> names = currentScope->getParamNames(fName);
-            
-            SymTable* funcScope = new SymTable(fName, currentScope);
-            ASTNode* currentArg = right;
-
-            for (int i = 0; i < names.size(); i++) {
-                if (currentArg == nullptr) break;
-
-                ASTNode* val = currentArg->left->evaluate(currentScope);
-
-                funcScope->addVariable(names[i], val->exprType);
-                funcScope->updateVarValue(names[i], val->getStringValue());
-
-                currentArg = currentArg->right;
-            }
-            
-            ASTNode* body = currentScope->getFunctionBody(fName);
-            ASTNode* rez = body->evaluate(funcScope);
-
-            if (rez != nullptr && rez->label == "RETURN_SIGNAL") {
-                string realType = rez->get_type();
-                string realValue = rez->getStringValue();
-
-                cout << "DEBUG CALL: Extras valoarea [" << realValue << "] de tip [" << realType << "]" << endl;
-
-                return new ASTNode(realType, realValue, realType);
-            }
-            
-            string declaredReturnType = currentScope->getType(fName);
-
-            cout << "DEBUG: Functia " << fName << " s-a terminat fara return. Returnam valoare implicita pentru tipul: " << declaredReturnType << endl;
-
-            if (declaredReturnType == "bool") {
-                return new ASTNode("bool", "true", "bool"); // sau "false", depinde de preferință
-            } 
-            else if (declaredReturnType == "int") {
-                return new ASTNode("int", "0", "int");
-            } 
-            else if (declaredReturnType == "float") {
-                return new ASTNode("float", "0.0", "float");
-            } 
-            else if (declaredReturnType == "string") {
-                return new ASTNode("string", "", "string");
-            } 
-            else if (declaredReturnType == "char") {
-                return new ASTNode("char", " ", "char");
-            }
-
-            return new ASTNode("int", "0", "int");
-        }
-        else if (label == "NEW_CLASS") {
+        
+        if (label == "NEW_CLASS") {
 
             cout<<"AM INTRAT IN NODULNEW_C;LASS SKIBIDY"<<endl;
             string instanceName = left->label;
@@ -685,20 +659,6 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                 cout << "DEBUG: Instantiated object " << instanceName << " of class " << className << endl;
             }
             return nullptr;
-        }
-        else if (label == "METHOD_CALL") {
-            string objName = left->left->label;
-            string methodName = left->right->label;
-            ASTNode* args = right;
-
-            string classType = currentScope->getType(objName);
-            SymTable* classScope = currentScope->getChildScope(classType);
-
-            SymTable* execScope = new SymTable(methodName, classScope);
-            
-            
-            ASTNode* body = classScope->getFunctionBody(methodName);
-            return body->evaluate(execScope);
         }
         
         
