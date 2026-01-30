@@ -28,4 +28,5 @@ main
     
     Print("Rezultatul este:");
     Print(rezultat); // 13
+    Print(newline);
 end_main

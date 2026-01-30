@@ -39,7 +39,7 @@ public:
     string get_type();
 
     void Print();
-    void printAST(int level);
+    void printAST(std::ostream& fout,int level);
     int compareNodes(ASTNode* L, ASTNode* R);
 
     ASTNode* left;

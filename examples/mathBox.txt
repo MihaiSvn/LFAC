@@ -1,0 +1,136 @@
+class_section
+
+class MathToolbox
+{
+    class_var_section
+        int data_array[5];
+        int size = 5;
+
+    class_methods_section
+        int initializeArray(int v1, int v2, int v3, int v4, int v5) {
+            data_array[0] = v1;
+            data_array[1] = v2;
+            data_array[2] = v3;
+            data_array[3] = v4;
+            data_array[4] = v5;
+            return 1;
+        }
+
+        int calculateSum() {
+            int i;
+            int total = 0;
+            for (i = 0; i < size; i++) {
+                total = total + data_array[i];
+            }
+            return total;
+        }
+
+        int printClassVector() {
+            int i;
+            for(i = 0; i < size; i++) {
+                Print(data_array[i]);
+            }
+            Print(newline);
+            return 1;
+        }
+}
+
+global_var_section
+    int final_sum;
+    int fact_result;
+    int gcd_result;
+    int found_index;
+    int x_val, y_val;
+    int target = 23;
+    int global_sir[10] = {56, 2, 38, 12, 91, 8, 72, 5, 23, 16};
+    int sorted_v[10] = {2, 5, 8, 12, 16, 23, 38, 56, 72, 91};
+
+global_fun_section
+    int factorial(int n) {
+        if (n == 0) { return 1; }
+        auto small_res = factorial(n - 1);
+        return n * small_res;
+    }
+
+    int getGCD(int a, int b) {
+        if (a == 0) { return b; }
+        while (b != 0) {
+            if (a > b) { a = a - b; }
+            else { b = b - a; }
+        }
+        return a;
+    }
+
+    int binarySearch(int start, int end, int val) {
+        int mid;
+        if (end >= start) {
+            mid = start + (end - start) / 2;
+            if (sorted_v[mid] == val) { return mid; }
+            if (sorted_v[mid] > val) { return binarySearch(start, mid - 1, val); }
+            return binarySearch(mid + 1, end, val);
+        }
+        return -1;
+    }
+
+    int bubbleSort(int len) {
+        int i; int j; int temp;
+        for (i = 0; i < len - 1; i++) {
+            for (j = 0; j < len - i - 1; j++) {
+                if (global_sir[j] > global_sir[j + 1]) {
+                    temp = global_sir[j];
+                    global_sir[j] = global_sir[j + 1];
+                    global_sir[j + 1] = temp;
+                }
+            }
+        }
+        return 1;
+    }
+
+    int printGlobalVector(int len) {
+        int i;
+        for(i = 0; i < len; i++) {
+            Print(global_sir[i]);
+        }
+        Print(newline);
+        return 1;
+    }
+
+main
+    MathToolbox tool = new MathToolbox();
+
+    Print("1. OOP Section - Class Vector:");
+    tool.initializeArray(10, 50, 20, 40, 30);
+    tool.printClassVector();
+    
+    final_sum = tool.calculateSum();
+    Print("Sum of class elements: ");
+    Print(final_sum); 
+    Print(newline);
+
+    Print("2. Recursion Section - Factorial of 5:");
+    fact_result = factorial(5); 
+    Print(fact_result);
+    Print(newline);
+
+    Print("3. Algorithm Section - Bubble Sort:");
+    Print("Before:");
+    printGlobalVector(10);
+    
+    bubbleSort(10);
+    
+    Print("After:");
+    printGlobalVector(10);
+    Print(newline);
+
+    Print("4. Searching Section - Binary Search for 23:");
+    found_index = binarySearch(0, 9, target);
+    
+    if (found_index != -1) {
+        Print("Found at index: ");
+        Print(found_index);
+    } else {
+        Print("Target not found.");
+    }
+    Print(newline);
+
+end_main

@@ -1,0 +1,88 @@
+ --- SCOPE: global ---
+   VAR: int tool.size = 5
+   VAR: MathToolbox tool = ?
+   VAR: int target = 23
+   VAR: int found_index = 5
+   VAR: int y_val = ?
+   VAR: int gcd_result = ?
+   VAR: int x_val = ?
+   VAR: int fact_result = 120
+   VAR: int final_sum = 150
+   VEC: int tool.data_array[5] = { 0 0 0 0 0 }
+   VEC: int sorted_v[10] = { 2 5 8 12 16 23 38 56 72 91 }
+   VEC: int global_sir[10] = { 2 5 8 12 16 23 38 56 72 91 }
+   FUN: int tool.initializeArray
+   FUN: int tool.calculateSum
+   FUN: int printGlobalVector
+   FUN: int binarySearch
+   FUN: int tool.printClassVector
+   FUN: int getGCD
+   FUN: int bubbleSort
+   FUN: int factorial
+
+ --- SCOPE: MathToolbox ---
+   VAR: int size = 5
+   VEC: int data_array[5] = { 10 50 20 40 30 }
+   FUN: int printClassVector
+   FUN: int calculateSum
+   FUN: int initializeArray
+
+ --- SCOPE: initializeArray ---
+   VAR: int v5 = ?
+   VAR: int v4 = ?
+   VAR: int v3 = ?
+   VAR: int v2 = ?
+   VAR: int v1 = ?
+
+ --- SCOPE: calculateSum ---
+   VAR: int total = 0
+   VAR: int i = ?
+
+ --- SCOPE: printClassVector ---
+   VAR: int i = ?
+
+ --- SCOPE: MathToolbox ---
+   VAR: int size = 5
+   VEC: int data_array[5] = { 10 50 20 40 30 }
+   FUN: int printClassVector
+   FUN: int calculateSum
+   FUN: int initializeArray
+
+ --- SCOPE: initializeArray ---
+   VAR: int v5 = ?
+   VAR: int v4 = ?
+   VAR: int v3 = ?
+   VAR: int v2 = ?
+   VAR: int v1 = ?
+
+ --- SCOPE: calculateSum ---
+   VAR: int total = 0
+   VAR: int i = ?
+
+ --- SCOPE: printClassVector ---
+   VAR: int i = ?
+
+ --- SCOPE: factorial ---
+   VAR: int small_res = ?
+   VAR: int n = ?
+
+ --- SCOPE: getGCD ---
+   VAR: int b = ?
+   VAR: int a = ?
+
+ --- SCOPE: binarySearch ---
+   VAR: int mid = ?
+   VAR: int val = ?
+   VAR: int end = ?
+   VAR: int start = ?
+
+ --- SCOPE: bubbleSort ---
+   VAR: int temp = ?
+   VAR: int j = ?
+   VAR: int i = ?
+   VAR: int len = ?
+
+ --- SCOPE: printGlobalVector ---
+   VAR: int i = ?
+   VAR: int len = ?
+

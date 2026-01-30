@@ -1,5 +1,6 @@
 #include "AST.h"
 #include "SymTable.h"
+#include <fstream>
 
 extern SymTable* globalScope;
 
@@ -87,17 +88,19 @@ string ASTNode::getStringValue() {
     return "";
 }
 
-void ASTNode::printAST(int level) {
+void ASTNode::printAST(std::ostream& fout, int level) {
     if (this == nullptr) return;
 
-    for (int i = 0; i < level; i++) cout << "  |";
+    for (int i = 0; i < level; i++) fout << "  |";
 
-    cout << "-- [Label: " << (label.empty() ? "NONE" : label) 
-         << " | Type: " << this->type 
-         << " | ExprType: " << (exprType.empty() ? "NONE" : exprType) << "]" << endl;
+        for (int i = 0; i < level; i++) fout << "  |";
 
-    if (left) left->printAST(level + 1);
-    if (right) right->printAST(level + 1);
+        fout << "-- [Label: " << (label.empty() ? "NONE" : label) 
+             << " | Type: " << this->type 
+             << " | ExprType: " << (exprType.empty() ? "NONE" : exprType) << "]" << std::endl;
+        
+    if (left) left->printAST(fout,level + 1);
+    if (right) right->printAST(fout,level + 1);
 }
 
 int ASTNode::compareNodes(ASTNode* L, ASTNode* R) {
@@ -188,7 +191,7 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
 
                 //cout << "--- DEBUG CALL ---" << endl;
                 //cout << "Nume Parametru: " << names[i] << endl;
-                //cout << "Tip Nod Evaluat: " << evalArg->type << endl; // 0=int, 5=id, etc.
+                //cout << "Tip Nod Evaluat: " << evalArg->type << endl;
                 //cout << "Label Evaluat: " << evalArg->label << endl;
                 //cout << "Valoare String: " << evalArg->getStringValue() << endl;
 
@@ -214,6 +217,8 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
             }
             //cout << "CALL returneaza la main: NULLLLL" << rez->getStringValue() << endl;
             return rez;
+        //IN STANGA CONDITIA, IN DREAPTA UN NOD BODY CARE IN STANGA ARE THEN, IAR IN DREAPTA RAMURILE ELSE
+
     } else if (label == "IF") {
             //cout << "DEBUG: Conditie IF am INTRAT"<<endl;
 
@@ -385,7 +390,7 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
                 return rezultat;
             }
             if(rezultat->getStringValue()=="NEWLINE_TOKEN"){
-                cout<<endl<<"[Output]: ";
+                cout<<endl;
             }
             else cout << rezultat->getStringValue()<<" ";
             return rezultat;
@@ -409,7 +414,6 @@ ASTNode* ASTNode::evaluate(SymTable* currentScope){
     else if(left!=nullptr && right!=nullptr){
     //cout << "Evaluate nod BINAR: " << label << " | Type: " << this->type << endl;
 
-        //IN STANGA CONDITIA, IN DREAPTA UN NOD BODY CARE IN STANGA ARE THEN, IAR IN DREAPTA RAMURILE ELSE
         
 
         

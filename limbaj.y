@@ -74,15 +74,19 @@ string current_init_vec_name;
 program : class_section global_var_section global_fun_section main 
 {
 if(errorCount == 0 && $4 != nullptr) {
-        cout<<endl;
-        $4->printAST(0);
-        cout << "--- Start Execution ---" << endl;
-        $4->evaluate(globalScope);
-        cout << "--- Execution Finished Successfully ---" << endl;
-        std::ofstream fout("tables.txt");
-        if (fout.is_open()) {
-           globalScope->printTableToFile(fout);
+        //cout<<endl;
+        std::ofstream fout("debug/ast.txt");
+        if(fout.is_open()){
+           $4->printAST(fout,0);
            fout.close();
+        }
+        //cout << "--- Start Execution ---" << endl;
+        $4->evaluate(globalScope);
+        //cout << endl << "--- Execution Finished Successfully ---" << endl;
+        std::ofstream out("debug/tables.txt");
+        if (out.is_open()) {
+           globalScope->printTableToFile(out);
+           out.close();
         }
 
     }
@@ -90,7 +94,7 @@ if(errorCount == 0 && $4 != nullptr) {
 };
 
 //    ################# CLASE ###########################
-class_section : {std::cout<<endl<<"No classes"<<endl;}
+class_section : {/*std::cout<<endl<<"No classes"<<endl;*/}
             | CLASS_SECTION class_declarations;
 
 class_declarations : class_declaration
@@ -117,11 +121,11 @@ class_declaration : CLASS ID '{'
 
 class_block : class_var_section class_methods_section;
 
-class_var_section : {std::cout<<endl<<"No variables"<<endl;}
+class_var_section : {/*std::cout<<endl<<"No variables"<<endl;*/}
             | CLASS_VAR_SECTION variable_declarations
             ;
 
-class_methods_section : {std::cout<<endl<<"No methods"<<endl;}
+class_methods_section : {/*std::cout<<endl<<"No methods"<<endl;*/}
             | CLASS_METHODS_SECTION function_declarations
             ;
 
@@ -691,7 +695,7 @@ class_var_call : ID '.' ID ASSIGN expression
 
 //    ################# VARIABILE ###########################
 
-global_var_section: {std::cout<<endl<<"No global variables"<<endl;}
+global_var_section: {/*std::cout<<endl<<"No global variables"<<endl;*/}
             | GVAR_SECTION variable_declarations
             ;
 
@@ -987,7 +991,7 @@ var_list: ID
     }
 //    ################# FUNCTII ###########################
 
-global_fun_section : {std::cout<<endl<<"No global functions"<<endl;}
+global_fun_section : {/*std::cout<<endl<<"No global functions"<<endl;*/}
             | GFUN_SECTION function_declarations
             ;
 
