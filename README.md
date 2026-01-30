@@ -1,3 +1,5 @@
+# 🚀 C-LFA (C for Formal Automata) Compiler
+
 ## 🎓 Project Context
 
 This project was developed for the **Formal Languages, Automata, and Compilers (LFAC)** course at the Faculty of Computer Science, "Alexandru Ioan Cuza" University of Iași.
@@ -8,7 +10,7 @@ The goal was to build a functional compiler for a custom language using:
 * **C++:** For managing the Symbol Table, scope control, and internal data structures.
 
 
-# 🚀 C-LFA (C for Formal Automata) Compiler
+## 🚀 Project Overview
 
 C-LFA is a C-style imperative language designed for educational purposes. It features a strict modular structure, object-oriented capabilities, and support for recursive algorithms and type inference.
 
